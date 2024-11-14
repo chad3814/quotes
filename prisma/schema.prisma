@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+  output = "./client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+model Movie {
+  id     Int         @id @default(autoincrement())
+  title  String
+  tmdbId String?
+  imdbId String?
+  cast   Character[]
+  quotes Quote[]
+  lines  Line[]
+
+  @@unique([tmdbId])
+  @@unique([imdbId])
+  @@index([title])
+  @@index([tmdbId])
+  @@index([imdbId])
+}
+
+model Actor {
+  id         Int         @id @default(autoincrement())
+  name       String
+  tmdbId     String?
+  imdbId     String?
+  characters Character[]
+
+  @@unique([tmdbId])
+  @@unique([imdbId])
+  @@index([name])
+  @@index([tmdbId])
+  @@index([imdbId])
+}
+
+model Character {
+  id      Int    @id @default(autoincrement())
+  name    String
+  actor   Actor  @relation(references: [id], fields: [actorId])
+  actorId Int
+  movie   Movie  @relation(references: [id], fields: [movieId])
+  movieId Int
+  lines   Line[]
+
+  @@index([name])
+}
+
+model Line {
+  id          Int       @id @default(autoincrement())
+  movie       Movie     @relation(references: [id], fields: [movieId])
+  movieId     Int
+  character   Character @relation(references: [id], fields: [characterId])
+  characterId Int
+  text        String
+  quote       Quote     @relation(references: [id], fields: [quoteId])
+  quoteId     Int
+  quoteOrder  Int
+
+  @@index([text])
+}
+
+model Quote {
+  id      Int    @id @default(autoincrement())
+  movie   Movie  @relation(references: [id], fields: [movieId])
+  movieId Int
+  lines   Line[]
+}
