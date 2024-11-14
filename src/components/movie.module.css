@@ -1,0 +1,42 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    justify-items: flex-start;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+}
+
+.poster {
+    max-width: 100px;
+    height: calc(600 / width * 900);
+    align-self: center;
+}
+
+.noPoster {
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    justify-content: center;
+    height: 150px;
+    width: 100px;
+    border: 1px solid white;
+    border-radius: 10px;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-items: flex-start;
+    justify-content:space-between;
+}
+
+.description {
+    justify-self: flex-start;
+    flex-grow: 2;
+}
+
+.buttons {
+    justify-self: flex-end;
+}

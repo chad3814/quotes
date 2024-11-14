@@ -7,7 +7,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch"]
-  output = "./client"
+  output          = "./client"
 }
 
 datasource db {
@@ -16,17 +16,21 @@ datasource db {
 }
 
 model Movie {
-  id     Int         @id @default(autoincrement())
-  title  String
-  tmdbId String?
-  imdbId String?
-  cast   Character[]
-  quotes Quote[]
-  lines  Line[]
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  year        Int?
+  tmdbId      Int?
+  imdbId      String?
+  posterUrl   String?
+  cast        Character[]
+  quotes      Quote[]
+  lines       Line[]
 
   @@unique([tmdbId])
   @@unique([imdbId])
   @@index([title])
+  @@index([description])
   @@index([tmdbId])
   @@index([imdbId])
 }
@@ -34,8 +38,9 @@ model Movie {
 model Actor {
   id         Int         @id @default(autoincrement())
   name       String
-  tmdbId     String?
+  tmdbId     Int?
   imdbId     String?
+  photoUrl   String?
   characters Character[]
 
   @@unique([tmdbId])
@@ -48,6 +53,7 @@ model Actor {
 model Character {
   id      Int    @id @default(autoincrement())
   name    String
+  imdbId  String?
   actor   Actor  @relation(references: [id], fields: [actorId])
   actorId Int
   movie   Movie  @relation(references: [id], fields: [movieId])
