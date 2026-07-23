@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { quoteSlugBase, slugify } from "@/lib/slug";
+import { newId } from "@/lib/ids";
 
 describe("slugify", () => {
   it("lowercases, trims, and hyphenates", () => {
@@ -12,6 +13,19 @@ describe("slugify", () => {
 
   it("returns an empty string for punctuation-only input", () => {
     expect(slugify("!!!")).toBe("");
+  });
+
+  it("strips diacritics from accented input", () => {
+    expect(slugify("Café Für Élise")).toBe("cafe-fur-elise");
+  });
+});
+
+describe("newId", () => {
+  it("returns a non-empty string and differs between calls", () => {
+    const first = newId();
+    const second = newId();
+    expect(first.length).toBeGreaterThan(0);
+    expect(first).not.toBe(second);
   });
 });
 

@@ -27,4 +27,12 @@ describe("validateSpan", () => {
     expect(validateSpan(CONTENT, -1, 4).ok).toBe(false);
     expect(validateSpan(CONTENT, 0, CONTENT.length + 1).ok).toBe(false);
   });
+
+  it("rejects a non-integer offset", () => {
+    expect(validateSpan("hello", 1, 2.5).ok).toBe(false);
+  });
+
+  it("accepts the exact upper boundary where end equals content length", () => {
+    expect(validateSpan("hello", 0, 5)).toEqual({ ok: true });
+  });
 });
