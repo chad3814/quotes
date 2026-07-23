@@ -3,6 +3,7 @@ import type { Database } from "@/db/types";
 import type { EditionFormat, WorkType } from "@/db/schema";
 import { works } from "@/db/schema";
 import { slugify } from "@/lib/slug";
+import { quotePreview } from "@/lib/preview";
 import { ensureUniqueSlug } from "@/repositories/slug-util";
 
 export type CreateWorkInput = {
@@ -50,17 +51,19 @@ export type WorkPage = {
   }[];
 };
 
-const WORK_PREVIEW_LENGTH = 160;
-
-function workPreview(searchText: string): string {
-  const flat = searchText.replace(/\n/g, " ").trim();
-  return flat.length <= WORK_PREVIEW_LENGTH ? flat : `${flat.slice(0, WORK_PREVIEW_LENGTH - 1)}…`;
-}
-
 export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPage | null> {
   const work = await db.query.works.findFirst({
     where: eq(works.slug, slug),
-    with: { editions: { with: { quotes: true } } },
+    with: {
+      editions: {
+        orderBy: (t, { asc }) => [asc(t.createdAt), asc(t.id)],
+        with: {
+          quotes: {
+            orderBy: (t, { asc }) => [asc(t.createdAt), asc(t.id)],
+          },
+        },
+      },
+    },
   });
   if (!work) return null;
 
@@ -77,7 +80,7 @@ export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPag
       quotes: edition.quotes.map((quote) => ({
         id: quote.id,
         slug: quote.slug,
-        preview: workPreview(quote.searchText),
+        preview: quotePreview(quote.searchText),
       })),
     })),
   };
