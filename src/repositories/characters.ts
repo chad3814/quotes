@@ -1,8 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { AttributionRole } from "@/db/schema";
 import { attributions, characters, lines, quotes } from "@/db/schema";
 import { slugify } from "@/lib/slug";
+import { quotePreview } from "@/lib/preview";
 import { ensureUniqueSlug } from "@/repositories/slug-util";
 
 export type CreateCharacterInput = {
@@ -31,25 +32,24 @@ export type CharacterPage = {
   asSubject: QuoteSummary[];
 };
 
-const PREVIEW_LENGTH = 160;
-
-function preview(searchText: string): string {
-  const flat = searchText.replace(/\n/g, " ").trim();
-  return flat.length <= PREVIEW_LENGTH ? flat : `${flat.slice(0, PREVIEW_LENGTH - 1)}…`;
-}
-
 export async function getCharacterPageBySlug(db: Database, slug: string): Promise<CharacterPage | null> {
   const character = await db.query.characters.findFirst({ where: eq(characters.slug, slug) });
   if (!character) return null;
 
   const quotesForRole = async (role: AttributionRole): Promise<QuoteSummary[]> => {
     const rows = await db
-      .selectDistinct({ id: quotes.id, slug: quotes.slug, searchText: quotes.searchText })
+      .selectDistinct({
+        id: quotes.id,
+        slug: quotes.slug,
+        searchText: quotes.searchText,
+        createdAt: quotes.createdAt,
+      })
       .from(attributions)
       .innerJoin(lines, eq(attributions.lineId, lines.id))
       .innerJoin(quotes, eq(lines.quoteId, quotes.id))
-      .where(and(eq(attributions.characterId, character.id), eq(attributions.role, role)));
-    return rows.map((row) => ({ id: row.id, slug: row.slug, preview: preview(row.searchText) }));
+      .where(and(eq(attributions.characterId, character.id), eq(attributions.role, role)))
+      .orderBy(asc(quotes.createdAt), asc(quotes.id));
+    return rows.map((row) => ({ id: row.id, slug: row.slug, preview: quotePreview(row.searchText) }));
   };
 
   return {
