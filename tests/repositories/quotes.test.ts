@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { createTestDb } from "../setup/test-db";
-import { quotes } from "@/db/schema";
+import { lines, quotes } from "@/db/schema";
 import { createWork } from "@/repositories/works";
 import { createEdition } from "@/repositories/editions";
 import { createCharacter } from "@/repositories/characters";
@@ -61,6 +61,28 @@ describe("createQuote", () => {
         lines: [{ type: "DIALOG", content: "Use the Force." }],
       }),
     ).rejects.toThrow();
+  });
+
+  it("rolls back the transaction when a mid-transaction insert fails", async () => {
+    const db = await createTestDb();
+    const { edition, obiwan, luke } = await arrange(db);
+    await expect(
+      createQuote(db, {
+        editionId: edition.id,
+        lines: [
+          {
+            type: "DIALOG",
+            content: "Use the Force, Luke. Let go.",
+            attributions: [
+              { characterId: obiwan.id, role: "SPEAKER" },
+              { characterId: luke.id, role: "SPEAKER" },
+            ],
+          },
+        ],
+      }),
+    ).rejects.toThrow();
+    expect(await db.select().from(quotes)).toHaveLength(0);
+    expect(await db.select().from(lines)).toHaveLength(0);
   });
 });
 
