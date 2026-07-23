@@ -1,5 +1,6 @@
+import { eq } from "drizzle-orm";
 import type { Database } from "@/db/types";
-import type { WorkType } from "@/db/schema";
+import type { EditionFormat, WorkType } from "@/db/schema";
 import { works } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { ensureUniqueSlug } from "@/repositories/slug-util";
@@ -33,4 +34,51 @@ export async function createWork(db: Database, input: CreateWorkInput): Promise<
     })
     .returning({ id: works.id, slug: works.slug });
   return row;
+}
+
+export type WorkPage = {
+  id: string;
+  type: WorkType;
+  title: string;
+  slug: string;
+  year: number | null;
+  editions: {
+    id: string;
+    format: EditionFormat;
+    label: string | null;
+    quotes: { id: string; slug: string; preview: string }[];
+  }[];
+};
+
+const WORK_PREVIEW_LENGTH = 160;
+
+function workPreview(searchText: string): string {
+  const flat = searchText.replace(/\n/g, " ").trim();
+  return flat.length <= WORK_PREVIEW_LENGTH ? flat : `${flat.slice(0, WORK_PREVIEW_LENGTH - 1)}…`;
+}
+
+export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPage | null> {
+  const work = await db.query.works.findFirst({
+    where: eq(works.slug, slug),
+    with: { editions: { with: { quotes: true } } },
+  });
+  if (!work) return null;
+
+  return {
+    id: work.id,
+    type: work.type,
+    title: work.title,
+    slug: work.slug,
+    year: work.year,
+    editions: work.editions.map((edition) => ({
+      id: edition.id,
+      format: edition.format,
+      label: edition.label,
+      quotes: edition.quotes.map((quote) => ({
+        id: quote.id,
+        slug: quote.slug,
+        preview: workPreview(quote.searchText),
+      })),
+    })),
+  };
 }
