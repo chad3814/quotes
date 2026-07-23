@@ -2,10 +2,7 @@
   "name": "quote-data-layer",
   "version": "1.0.0",
   "description": "Movie/TV/Book Quotes",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -16,9 +13,6 @@
     "db:generate": "drizzle-kit generate",
     "verify": "npm run lint && npm run typecheck && npm run test -- --run && npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@paralleldrive/cuid2": "^3.3.0",
