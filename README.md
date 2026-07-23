@@ -1,2 +1,3 @@
-# quotes
-Movie Quotes
+# Internet Quote Database
+
+Movie/TV/Book Quotes
