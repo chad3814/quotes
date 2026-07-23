@@ -107,7 +107,11 @@ export const quotes = pgTable(
     page: integer("page"),
     percent: numeric("percent", { precision: 5, scale: 2 }),
     locationNote: text("location_note"),
+    // Maintained on write (via buildSearchText); any future line-mutation path MUST recompute this
+    // in the same transaction, or search_vector (derived below) goes stale.
     searchText: text("search_text").notNull().default(""),
+    // The closure below references `quotes` before its `const` binding is fully initialized; this is
+    // safe because generatedAlwaysAs's callback is invoked lazily, after the `quotes` table is defined.
     searchVector: tsvector("search_vector").generatedAlwaysAs(
       (): SQL => sql`to_tsvector('english', coalesce(${quotes.searchText}, ''))`,
     ),
