@@ -44,4 +44,35 @@ describe("validatePosition", () => {
   it("accepts an empty position", () => {
     expect(validatePosition({}, { format: "THEATRICAL", runtimeMs: null, pageCount: null })).toEqual({ ok: true });
   });
+
+  it("rejects startMs on a non-time-based format", () => {
+    const result = validatePosition({ startMs: 1000 }, { format: "HARDCOVER", runtimeMs: null, pageCount: null });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects endMs without startMs", () => {
+    const result = validatePosition(
+      { endMs: 5000 },
+      { format: "THEATRICAL", runtimeMs: 7_200_000, pageCount: null },
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects a negative startMs", () => {
+    const result = validatePosition(
+      { startMs: -1 },
+      { format: "THEATRICAL", runtimeMs: 7_200_000, pageCount: null },
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects a page below 1", () => {
+    const result = validatePosition({ page: 0 }, { format: "HARDCOVER", runtimeMs: null, pageCount: 300 });
+    expect(result.ok).toBe(false);
+  });
+
+  it("accepts a valid percent for ebooks", () => {
+    const result = validatePosition({ percent: 50 }, { format: "EBOOK", runtimeMs: null, pageCount: null });
+    expect(result).toEqual({ ok: true });
+  });
 });
