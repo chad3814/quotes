@@ -8,6 +8,8 @@ export type SearchResult = {
   rank: number;
 };
 
+type RawSearchRow = { id: string; slug: string; headline: string; rank: number };
+
 export async function searchQuotes(db: Database, query: string, limit = 20): Promise<SearchResult[]> {
   const result = (await db.execute(sql`
     select
@@ -19,7 +21,7 @@ export async function searchQuotes(db: Database, query: string, limit = 20): Pro
     where q.search_vector @@ websearch_to_tsquery('english', ${query})
     order by rank desc
     limit ${limit}
-  `)) as { rows: SearchResult[] };
+  `)) as { rows: RawSearchRow[] };
 
   return result.rows.map((row) => ({
     id: String(row.id),
