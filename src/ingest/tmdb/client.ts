@@ -1,4 +1,13 @@
-import type { TmdbClient, TmdbMovie, TmdbSeason, TmdbSeries } from "@/ingest/tmdb/types";
+import type {
+  TmdbClient,
+  TmdbMovie,
+  TmdbMovieSearchItem,
+  TmdbSearchResponse,
+  TmdbSearchResult,
+  TmdbSeason,
+  TmdbSeries,
+  TmdbTvSearchItem,
+} from "@/ingest/tmdb/types";
 
 export type TmdbClientOptions = {
   token?: string;
@@ -22,6 +31,12 @@ const DEFAULT_BASE = "https://api.themoviedb.org/3";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function yearFromDate(date: string | null | undefined): number | null {
+  if (!date) return null;
+  const year = Number(date.slice(0, 4));
+  return Number.isFinite(year) && year > 0 ? year : null;
 }
 
 export function createTmdbClient(options: TmdbClientOptions = {}): TmdbClient {
@@ -56,9 +71,21 @@ export function createTmdbClient(options: TmdbClientOptions = {}): TmdbClient {
     }
   }
 
+  async function search(type: "movie" | "tv", query: string): Promise<TmdbSearchResult[]> {
+    const trimmed = query.trim();
+    if (trimmed === "") return [];
+    if (type === "movie") {
+      const data = await get<TmdbSearchResponse<TmdbMovieSearchItem>>("/search/movie", { query: trimmed });
+      return data.results.map((r) => ({ id: r.id, title: r.title, year: yearFromDate(r.release_date), mediaType: "movie" }));
+    }
+    const data = await get<TmdbSearchResponse<TmdbTvSearchItem>>("/search/tv", { query: trimmed });
+    return data.results.map((r) => ({ id: r.id, title: r.name, year: yearFromDate(r.first_air_date), mediaType: "tv" }));
+  }
+
   return {
     getMovie: (id) => get<TmdbMovie>(`/movie/${id}`, { append_to_response: "external_ids" }),
     getSeries: (id) => get<TmdbSeries>(`/tv/${id}`, { append_to_response: "external_ids" }),
     getSeason: (seriesId, seasonNumber) => get<TmdbSeason>(`/tv/${seriesId}/season/${seasonNumber}`),
+    search,
   };
 }

@@ -2,7 +2,7 @@ import type { Database } from "@/db/types";
 import type { EditionFormat, LineType, WorkType } from "@/db/schema";
 import { parseTimecode } from "@/lib/format";
 import type { Position } from "@/lib/position";
-import { createQuote, type CreateAttributionInput, type CreateLineInput } from "@/repositories/quotes";
+import { createQuote, updateQuote, type CreateAttributionInput, type CreateLineInput } from "@/repositories/quotes";
 import { createWork } from "@/repositories/works";
 import { createEdition } from "@/repositories/editions";
 import { findOrCreateCharacter } from "@/repositories/characters";
@@ -121,5 +121,29 @@ export async function authorQuote(db: Database, input: AuthorQuoteInput): Promis
     const builtLines = await buildLines(tx, lines);
     const position = buildPosition(input.position ?? {});
     return createQuote(tx, { editionId, lines: builtLines, position });
+  });
+}
+
+export type EditQuoteInput = {
+  lines: AuthorLineInput[];
+  position?: AuthorPositionInput;
+};
+
+/**
+ * Applies admin-form edits to an existing quote: re-resolves speaker/subject
+ * characters by name (creating any new ones), rebuilds the position, and replaces
+ * the quote's lines. The quote's edition/source and slug are left unchanged.
+ * Throws Error with a user-facing message on invalid input.
+ */
+export async function editQuote(db: Database, id: string, input: EditQuoteInput): Promise<{ id: string; slug: string }> {
+  const lines = input.lines
+    .map((line) => ({ ...line, content: line.content.trim() }))
+    .filter((line) => line.content.length > 0);
+  if (lines.length === 0) throw new Error("Add at least one line with some text.");
+
+  return db.transaction(async (tx) => {
+    const builtLines = await buildLines(tx, lines);
+    const position = buildPosition(input.position ?? {});
+    return updateQuote(tx, id, { lines: builtLines, position });
   });
 }

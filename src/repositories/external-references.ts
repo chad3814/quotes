@@ -23,6 +23,29 @@ export async function findEntityIdByRef(
   return rows[0]?.entityId ?? null;
 }
 
+export type ExternalReference = { externalId: string; url: string | null };
+
+/** The reference for one entity from one provider, or null if none is recorded. */
+export async function getExternalReference(
+  db: Database,
+  entityType: EntityType,
+  entityId: string,
+  provider: ReferenceProvider,
+): Promise<ExternalReference | null> {
+  const rows = await db
+    .select({ externalId: externalReferences.externalId, url: externalReferences.url })
+    .from(externalReferences)
+    .where(
+      and(
+        eq(externalReferences.entityType, entityType),
+        eq(externalReferences.entityId, entityId),
+        eq(externalReferences.provider, provider),
+      ),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export type ExternalRefInput = {
   entityType: EntityType;
   entityId: string;

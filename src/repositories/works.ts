@@ -123,8 +123,43 @@ export type UpdateWorkFields = {
   parentWorkId?: string | null;
 };
 
+/**
+ * Patches a work's editable fields. The slug is intentionally left untouched — a
+ * title edit must not break the work's existing URL or inbound links.
+ */
 export async function updateWork(db: Database, id: string, fields: UpdateWorkFields): Promise<void> {
   await db.update(works).set({ ...fields, updatedAt: new Date() }).where(eq(works.id, id));
+}
+
+export type WorkEditData = {
+  id: string;
+  type: WorkType;
+  title: string;
+  originalTitle: string | null;
+  slug: string;
+  year: number | null;
+  seasonNumber: number | null;
+  episodeNumber: number | null;
+  synopsis: string | null;
+  parentWorkId: string | null;
+};
+
+/** Loads a work's raw editable fields by id (for the admin editor), or null. */
+export async function getWorkById(db: Database, id: string): Promise<WorkEditData | null> {
+  const row = await db.query.works.findFirst({ where: eq(works.id, id) });
+  if (!row) return null;
+  return {
+    id: row.id,
+    type: row.type,
+    title: row.title,
+    originalTitle: row.originalTitle,
+    slug: row.slug,
+    year: row.year,
+    seasonNumber: row.seasonNumber,
+    episodeNumber: row.episodeNumber,
+    synopsis: row.synopsis,
+    parentWorkId: row.parentWorkId,
+  };
 }
 
 export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPage | null> {

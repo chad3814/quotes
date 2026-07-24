@@ -44,8 +44,23 @@ export type TmdbSeason = {
   episodes: TmdbEpisode[];
 };
 
+/** Raw item from `/search/movie`. */
+export type TmdbMovieSearchItem = { id: number; title: string; release_date: string | null };
+/** Raw item from `/search/tv`. */
+export type TmdbTvSearchItem = { id: number; name: string; first_air_date: string | null };
+export type TmdbSearchResponse<T> = { results: T[] };
+
+/** Normalized search hit used by the admin title autocomplete. */
+export type TmdbSearchResult = {
+  id: number;
+  title: string;
+  year: number | null;
+  mediaType: "movie" | "tv";
+};
+
 export interface TmdbClient {
   getMovie(id: number): Promise<TmdbMovie>;
   getSeries(id: number): Promise<TmdbSeries>;
   getSeason(seriesId: number, seasonNumber: number): Promise<TmdbSeason>;
+  search(type: "movie" | "tv", query: string): Promise<TmdbSearchResult[]>;
 }

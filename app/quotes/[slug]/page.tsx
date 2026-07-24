@@ -3,8 +3,11 @@ import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db/client";
+import { auth } from "@/auth";
+import { isAdmin } from "@/lib/admin";
 import { getQuoteBySlug } from "@/repositories/quotes";
 import { editionFormatLabel, formatPosition, workTypeLabel } from "@/lib/format";
+import { AdminEditLink } from "../../_components/AdminEditLink";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +35,9 @@ export default async function QuotePage({ params }: { params: Params }) {
   const { slug } = await params;
   const quote = await loadQuote(slug);
   if (!quote) notFound();
+
+  const session = await auth();
+  const admin = isAdmin({ id: session?.user?.githubId, login: session?.user?.githubLogin });
 
   const speakers: Person[] = [];
   const subjects: Person[] = [];
@@ -61,6 +67,7 @@ export default async function QuotePage({ params }: { params: Params }) {
         <Link href={`/works/${work.slug}`}>{work.title}</Link>
         {" · "}
         {editionFormatLabel(edition.format)}
+        {admin && <AdminEditLink href={`/admin/quotes/${quote.id}/edit`} label="Edit this quote" />}
       </p>
 
       <blockquote className="blockquote">

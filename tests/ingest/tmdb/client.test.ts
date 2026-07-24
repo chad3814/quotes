@@ -38,4 +38,41 @@ describe("createTmdbClient", () => {
     await expect(client.getMovie(999)).rejects.toBeInstanceOf(TmdbError);
     await expect(client.getMovie(999)).rejects.not.toThrow(/SECRETKEY/);
   });
+
+  it("normalizes movie search results (title + year + mediaType)", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
+      jsonResponse({
+        results: [
+          { id: 11, title: "Star Wars", release_date: "1977-05-25" },
+          { id: 12, title: "Untitled", release_date: null },
+        ],
+      }),
+    );
+    const client = createTmdbClient({ token: "T", fetchImpl });
+    const results = await client.search("movie", "star wars");
+    expect(results).toEqual([
+      { id: 11, title: "Star Wars", year: 1977, mediaType: "movie" },
+      { id: 12, title: "Untitled", year: null, mediaType: "movie" },
+    ]);
+    const [url] = fetchImpl.mock.calls[0];
+    expect(String(url)).toContain("/search/movie");
+    expect(String(url)).toContain("query=star+wars");
+  });
+
+  it("normalizes tv search results using name + first_air_date", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
+      jsonResponse({ results: [{ id: 1399, name: "Game of Thrones", first_air_date: "2011-04-17" }] }),
+    );
+    const client = createTmdbClient({ token: "T", fetchImpl });
+    const results = await client.search("tv", "thrones");
+    expect(results).toEqual([{ id: 1399, title: "Game of Thrones", year: 2011, mediaType: "tv" }]);
+    expect(String(fetchImpl.mock.calls[0][0])).toContain("/search/tv");
+  });
+
+  it("skips the request and returns [] for a blank query", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => jsonResponse({ results: [] }));
+    const client = createTmdbClient({ token: "T", fetchImpl });
+    expect(await client.search("movie", "   ")).toEqual([]);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });

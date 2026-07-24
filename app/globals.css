@@ -1216,3 +1216,89 @@ textarea.admin-form__control {
     margin: 0;
   }
 }
+
+.admin-form__hint {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.admin-form__ok {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+/* TMDb title autocomplete */
+.tmdb-search {
+  position: relative;
+}
+
+.tmdb-search__status {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.tmdb-search__results {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--space-1));
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 20px color-mix(in srgb, black 12%, transparent);
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.tmdb-search__option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.tmdb-search__option:hover,
+.tmdb-search__option:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  outline: none;
+}
+
+.tmdb-search__year {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* Admin edit shield on public pages */
+.admin-edit-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2);
+  color: var(--muted);
+  vertical-align: middle;
+}
+
+.admin-edit-link:hover {
+  color: var(--accent);
+}

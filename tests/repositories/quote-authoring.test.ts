@@ -4,8 +4,8 @@ import { characters, editions, quotes, works } from "@/db/schema";
 import { createWork } from "@/repositories/works";
 import { createEdition } from "@/repositories/editions";
 import { createCharacter } from "@/repositories/characters";
-import { getQuoteBySlug } from "@/repositories/quotes";
-import { authorQuote } from "@/repositories/quote-authoring";
+import { getQuoteById, getQuoteBySlug } from "@/repositories/quotes";
+import { authorQuote, editQuote } from "@/repositories/quote-authoring";
 
 describe("authorQuote", () => {
   it("creates a quote on an existing edition, resolving speaker + subjects", async () => {
@@ -97,5 +97,69 @@ describe("authorQuote", () => {
         position: { page: "abc" },
       }),
     ).rejects.toThrow(/Page must be a whole number/);
+  });
+});
+
+describe("editQuote", () => {
+  async function seedQuote(db: Awaited<ReturnType<typeof createTestDb>>) {
+    const work = await createWork(db, { type: "MOVIE", title: "Star Wars", year: 1977 });
+    const edition = await createEdition(db, { workId: work.id, format: "THEATRICAL", runtimeMs: 7_200_000 });
+    const { slug } = await authorQuote(db, {
+      edition: { mode: "existing", id: edition.id },
+      lines: [{ type: "DIALOG", content: "Original line.", speaker: "Obi-Wan", subjects: ["Luke"] }],
+      position: { start: "1:00:00" },
+    });
+    const detail = await getQuoteBySlug(db, slug);
+    if (!detail) throw new Error("seed failed");
+    return { slug, id: detail.id };
+  }
+
+  it("replaces line content and re-resolves attributions, keeping the slug", async () => {
+    const db = await createTestDb();
+    const { id, slug } = await seedQuote(db);
+
+    const result = await editQuote(db, id, {
+      lines: [{ type: "DIALOG", content: "The Force will be with you, always.", speaker: "Obi-Wan", subjects: ["Luke"] }],
+      position: { start: "1:05:00" },
+    });
+    expect(result.slug).toBe(slug); // slug is stable across edits
+
+    const detail = await getQuoteById(db, id);
+    expect(detail?.lines).toHaveLength(1);
+    expect(detail?.lines[0].content).toBe("The Force will be with you, always.");
+    expect(detail?.position.startMs).toBe(3_900_000);
+    expect(detail?.lines[0].attributions.find((a) => a.role === "SPEAKER")?.characterName).toBe("Obi-Wan");
+  });
+
+  it("supports changing the number of lines", async () => {
+    const db = await createTestDb();
+    const { id } = await seedQuote(db);
+    await editQuote(db, id, {
+      lines: [
+        { type: "DIALOG", content: "First." },
+        { type: "DIALOG", content: "Second." },
+      ],
+    });
+    const detail = await getQuoteById(db, id);
+    expect(detail?.lines.map((l) => l.content)).toEqual(["First.", "Second."]);
+  });
+
+  it("throws (and rolls back) when all lines are blank", async () => {
+    const db = await createTestDb();
+    const { id } = await seedQuote(db);
+    await expect(editQuote(db, id, { lines: [{ type: "DIALOG", content: "   " }] })).rejects.toThrow(/at least one line/);
+    const detail = await getQuoteById(db, id);
+    expect(detail?.lines[0].content).toBe("Original line."); // unchanged
+  });
+
+  it("rejects an out-of-range position for the edition and leaves the quote intact", async () => {
+    const db = await createTestDb();
+    const { id } = await seedQuote(db);
+    await expect(
+      editQuote(db, id, { lines: [{ type: "DIALOG", content: "x" }], position: { start: "5:00:00" } }),
+    ).rejects.toThrow();
+    const detail = await getQuoteById(db, id);
+    expect(detail?.lines[0].content).toBe("Original line.");
+    expect(detail?.position.startMs).toBe(3_600_000);
   });
 });

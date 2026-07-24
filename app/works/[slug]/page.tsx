@@ -3,10 +3,13 @@ import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db/client";
+import { auth } from "@/auth";
+import { isAdmin } from "@/lib/admin";
 import { getWorkBySlug } from "@/repositories/works";
 import { editionFormatLabel, episodeCode, pluralize, workTypeLabel } from "@/lib/format";
 import { QuoteList } from "../../_components/QuoteList";
 import { WorkPoster } from "../../_components/WorkPoster";
+import { AdminEditLink } from "../../_components/AdminEditLink";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +28,9 @@ export default async function WorkPage({ params }: { params: Params }) {
   const { slug } = await params;
   const work = await loadWork(slug);
   if (!work) notFound();
+
+  const session = await auth();
+  const admin = isAdmin({ id: session?.user?.githubId, login: session?.user?.githubLogin });
 
   const code = episodeCode(work.seasonNumber, work.episodeNumber);
   const quotes = work.editions.flatMap((edition) =>
@@ -52,7 +58,10 @@ export default async function WorkPage({ params }: { params: Params }) {
             </>
           )}
         </p>
-        <h1 className="page-title">{work.title}</h1>
+        <h1 className="page-title">
+          {work.title}
+          {admin && <AdminEditLink href={`/admin/works/${work.id}`} label="Edit this work" />}
+        </h1>
         <p className="page-subtitle tnum">{subtitleParts.join(" · ")}</p>
       </div>
 

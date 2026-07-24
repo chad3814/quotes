@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createTestDb } from "../setup/test-db";
 import { works } from "@/db/schema";
 import { ingestTitle } from "@/ingest/ingest-title";
-import type { TmdbClient, TmdbMovie, TmdbSeason, TmdbSeries } from "@/ingest/tmdb/types";
+import type { TmdbClient, TmdbMovie, TmdbSearchResult, TmdbSeason, TmdbSeries } from "@/ingest/tmdb/types";
 
 const MOVIE: TmdbMovie = {
   id: 11, title: "Star Wars", original_title: "Star Wars", release_date: "1977-05-25",
@@ -25,6 +25,7 @@ class FakeTmdb implements TmdbClient {
   async getMovie(): Promise<TmdbMovie> { return MOVIE; }
   async getSeries(): Promise<TmdbSeries> { return SERIES; }
   async getSeason(_seriesId: number, seasonNumber: number): Promise<TmdbSeason> { return this.seasons[seasonNumber]; }
+  async search(): Promise<TmdbSearchResult[]> { return []; }
 }
 
 describe("ingestTitle", () => {
