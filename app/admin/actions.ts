@@ -9,7 +9,7 @@ import { authorQuote, type AuthorQuoteInput } from "@/repositories/quote-authori
 
 export async function createQuoteAction(payload: AuthorQuoteInput): Promise<{ error: string }> {
   const session = await auth();
-  if (!isAdmin(session?.user?.githubId)) {
+  if (!isAdmin({ id: session?.user?.githubId, login: session?.user?.githubLogin })) {
     return { error: "You are not authorized to add quotes." };
   }
 

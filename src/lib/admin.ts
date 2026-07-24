@@ -11,11 +11,29 @@ export function parseAdminAccounts(raw: string | undefined): Set<string> {
   );
 }
 
+export type AdminIdentity = {
+  /** Numeric GitHub user id. */
+  id?: string | null;
+  /** GitHub login / username. */
+  login?: string | null;
+};
+
 /**
- * True when the given GitHub id is present in the admin allowlist. Compares as
- * strings (GitHub ids are numeric but handled as strings throughout).
+ * True when the signed-in GitHub account is on the admin allowlist. ADMIN_ACCOUNTS
+ * entries may be either numeric ids or usernames, so an account matches if its id
+ * (exact) OR its login (case-insensitive) is listed.
  */
-export function isAdmin(githubId: string | null | undefined, raw = process.env.ADMIN_ACCOUNTS): boolean {
-  if (!githubId) return false;
-  return parseAdminAccounts(raw).has(githubId);
+export function isAdmin(identity: AdminIdentity | null | undefined, raw = process.env.ADMIN_ACCOUNTS): boolean {
+  const allowlist = parseAdminAccounts(raw);
+  if (allowlist.size === 0 || !identity) return false;
+
+  if (identity.id && allowlist.has(identity.id)) return true;
+
+  if (identity.login) {
+    const login = identity.login.toLowerCase();
+    for (const entry of allowlist) {
+      if (entry.toLowerCase() === login) return true;
+    }
+  }
+  return false;
 }

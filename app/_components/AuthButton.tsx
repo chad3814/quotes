@@ -40,7 +40,7 @@ export async function AuthButton() {
     return <SignIn />;
   }
 
-  const admin = isAdmin(session.user.githubId);
+  const admin = isAdmin({ id: session.user.githubId, login: session.user.githubLogin });
 
   return (
     <div className="auth">

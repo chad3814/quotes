@@ -12,12 +12,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent("/admin")}`);
   }
 
-  if (!isAdmin(session.user.githubId)) {
+  if (!isAdmin({ id: session.user.githubId, login: session.user.githubLogin })) {
     return (
       <div className="container">
         <div className="empty">
           <h1 className="page-title">Not authorized</h1>
-          <p className="empty__hint">Your GitHub account isn’t on the admin allowlist.</p>
+          <p className="empty__hint">
+            Your GitHub account isn’t on the admin allowlist. Add your username or numeric id to{" "}
+            <code>ADMIN_ACCOUNTS</code>, then sign out and back in.
+          </p>
+          <p className="empty__hint tnum">
+            Signed in as {session.user.githubLogin ?? session.user.name ?? "unknown"} (id{" "}
+            {session.user.githubId ?? "unknown"}).
+          </p>
         </div>
       </div>
     );
