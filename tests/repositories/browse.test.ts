@@ -3,7 +3,7 @@ import { createTestDb } from "../setup/test-db";
 import { createWork, getWorkBySlug, listWorks } from "@/repositories/works";
 import { createEdition } from "@/repositories/editions";
 import { createCharacter } from "@/repositories/characters";
-import { createQuote, getQuoteBySlug, listRecentQuotes } from "@/repositories/quotes";
+import { createQuote, getQuoteBySlug, getRandomQuote, listRecentQuotes } from "@/repositories/quotes";
 import { listCharacters } from "@/repositories/characters";
 import { searchQuotes } from "@/repositories/search";
 import { renderHeadline } from "@/lib/highlight";
@@ -176,5 +176,22 @@ describe("listWorks quoteCount includes child works", () => {
     // Episodes still report only their own quotes.
     const episodes = await listWorks(db, { parentId: series.id });
     expect(episodes.map((e) => e.quoteCount).sort()).toEqual([1, 2]);
+  });
+});
+
+describe("getRandomQuote", () => {
+  it("returns a quote with its source work", async () => {
+    const db = await createTestDb();
+    await seed(db);
+    const quote = await getRandomQuote(db);
+    expect(quote).not.toBeNull();
+    expect(quote?.slug).toBeTruthy();
+    expect(quote?.text.length).toBeGreaterThan(0);
+    expect(quote?.work.title).toBeTruthy();
+  });
+
+  it("returns null when there are no quotes", async () => {
+    const db = await createTestDb();
+    expect(await getRandomQuote(db)).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getDb } from "@/db/client";
-import { listRecentQuotes } from "@/repositories/quotes";
+import { getRandomQuote, listRecentQuotes } from "@/repositories/quotes";
 import { listCharacters } from "@/repositories/characters";
 import { getLibraryStats } from "@/repositories/stats";
 import { pluralize } from "@/lib/format";
@@ -10,13 +10,12 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const db = getDb();
-  const [stats, recent, characters] = await Promise.all([
+  const [stats, featured, recent, characters] = await Promise.all([
     getLibraryStats(db),
-    listRecentQuotes(db, 7),
+    getRandomQuote(db),
+    listRecentQuotes(db, 12),
     listCharacters(db, { limit: 8 }),
   ]);
-
-  const [featured, ...rest] = recent;
 
   return (
     <div className="wide home">
@@ -25,7 +24,9 @@ export default async function HomePage() {
         <p className="eyebrow">A quote archive</p>
         {featured ? (
           <>
-            <p className="home__quote">{featured.preview}</p>
+            <Link href={`/quotes/${featured.slug}`} className="home__quote-link">
+              <p className="home__quote">{featured.text}</p>
+            </Link>
             <p className="home__quote-cite">
               <Link href={`/works/${featured.work.slug}`}>
                 {featured.work.title}
@@ -58,11 +59,11 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {rest.length > 0 && (
+      {recent.length > 0 && (
         <section className="home__section">
           <h2 className="section-label">Recently added</h2>
           <div className="rows">
-            {rest.map((quote) => (
+            {recent.map((quote) => (
               <div key={quote.slug} className="quote-row">
                 <Link href={`/quotes/${quote.slug}`} className="quote-row__link">
                   <span className="quote-row__snippet">{quote.preview}</span>

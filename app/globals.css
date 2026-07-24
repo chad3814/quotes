@@ -492,12 +492,31 @@ main:focus {
   margin-inline: auto;
 }
 
+.home__quote-link {
+  display: block;
+  color: inherit;
+}
+
+.home__quote-link:hover {
+  text-decoration: none;
+}
+
+.home__quote-link:hover .home__quote {
+  color: var(--accent);
+}
+
 .home__quote {
   font-family: var(--font-serif);
   font-size: var(--quote);
   line-height: var(--lh-quote);
   font-weight: 400;
-  text-wrap: balance;
+  /* Preserve authored line breaks so a multi-speaker quote isn't mashed onto one line, */
+  white-space: pre-line;
+  /* but cap the hero at a few lines (on a line boundary) so a long quote stays hero-sized. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
   margin-block: var(--space-4) var(--space-4);
 }
 
@@ -776,6 +795,11 @@ b.hl {
    Quote detail — the hero
    -------------------------------------------------------------------------- */
 .quote-page {
+  /* Wide reading column so more of a line fits on one row. */
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: var(--pad-inline);
   padding-top: var(--space-10);
 }
 
@@ -808,6 +832,7 @@ b.hl {
 
 .blockquote__line {
   display: block;
+  position: relative;
   margin-bottom: var(--space-3);
 }
 
@@ -824,6 +849,21 @@ b.hl {
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--space-1);
+}
+
+/* On wide screens, hang the dialog speaker in the left margin — like the poster on
+   a work page — so the line stays left-justified in the centered column. Narrow
+   screens keep the speaker stacked above the line. The breakpoint is high enough
+   that the 64rem reading column still leaves room for the label in the margin. */
+@media (min-width: 80rem) {
+  .blockquote__speaker {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: 8rem;
+    margin: 0 var(--space-4) 0 0;
+    text-align: right;
+  }
 }
 
 .blockquote__line--stage .blockquote__content,

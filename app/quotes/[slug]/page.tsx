@@ -61,7 +61,7 @@ export default async function QuotePage({ params }: { params: Params }) {
   const { work, edition } = quote.source;
 
   return (
-    <div className="measure quote-page">
+    <div className="quote-page">
       <h1 className="sr-only">Quote from {work.title}</h1>
       <p className="quote-page__eyebrow">
         <Link href={`/works/${work.slug}`}>{work.title}</Link>

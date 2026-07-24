@@ -1,4 +1,4 @@
-import { desc, eq, type SQL } from "drizzle-orm";
+import { desc, eq, sql, type SQL } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { AttributionRole, EditionFormat, LineType, WorkType } from "@/db/schema";
 import { attributions, editions, lines, quotes, works } from "@/db/schema";
@@ -257,7 +257,10 @@ export async function getQuoteById(db: Database, id: string): Promise<QuoteDetai
 export type QuoteCard = {
   id: string;
   slug: string;
+  /** Flattened single-line snippet, for compact rows. */
   preview: string;
+  /** Full multi-line text (newline-separated lines), for the homepage hero. */
+  text: string;
   work: { title: string; slug: string; type: WorkType; year: number | null };
 };
 
@@ -283,6 +286,36 @@ export async function listRecentQuotes(db: Database, limit = 12): Promise<QuoteC
     id: row.id,
     slug: row.slug,
     preview: quotePreview(row.searchText),
+    text: row.searchText,
     work: { title: row.workTitle, slug: row.workSlug, type: row.workType, year: row.workYear },
   }));
+}
+
+/** A single random quote with its source work, for the homepage hero. Null if empty. */
+export async function getRandomQuote(db: Database): Promise<QuoteCard | null> {
+  const rows = await db
+    .select({
+      id: quotes.id,
+      slug: quotes.slug,
+      searchText: quotes.searchText,
+      workTitle: works.title,
+      workSlug: works.slug,
+      workType: works.type,
+      workYear: works.year,
+    })
+    .from(quotes)
+    .innerJoin(editions, eq(editions.id, quotes.editionId))
+    .innerJoin(works, eq(works.id, editions.workId))
+    .orderBy(sql`random()`)
+    .limit(1);
+
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    preview: quotePreview(row.searchText),
+    text: row.searchText,
+    work: { title: row.workTitle, slug: row.workSlug, type: row.workType, year: row.workYear },
+  };
 }
