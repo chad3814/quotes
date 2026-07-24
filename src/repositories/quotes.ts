@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { Database } from "@/db/types";
-import type { AttributionRole, LineType } from "@/db/schema";
-import { attributions, editions, lines, quotes } from "@/db/schema";
+import type { AttributionRole, EditionFormat, LineType, WorkType } from "@/db/schema";
+import { attributions, editions, lines, quotes, works } from "@/db/schema";
 import { buildSearchText } from "@/lib/search-text";
 import { quoteSlugBase } from "@/lib/slug";
+import { quotePreview } from "@/lib/preview";
 import { validatePosition, type Position } from "@/lib/position";
 import { validateSpan } from "@/lib/attribution";
 import { ensureUniqueSlug } from "@/repositories/slug-util";
@@ -91,9 +92,25 @@ export async function createQuote(db: Database, input: CreateQuoteInput): Promis
   });
 }
 
+export type QuotePosition = {
+  startMs: number | null;
+  endMs: number | null;
+  chapter: string | null;
+  page: number | null;
+  percent: string | null;
+  locationNote: string | null;
+};
+
+export type QuoteSource = {
+  work: { id: string; title: string; slug: string; type: WorkType; year: number | null };
+  edition: { id: string; format: EditionFormat; label: string | null };
+};
+
 export type QuoteDetail = {
   id: string;
   slug: string;
+  position: QuotePosition;
+  source: QuoteSource;
   lines: {
     ordinal: number;
     type: LineType;
@@ -113,6 +130,7 @@ export async function getQuoteBySlug(db: Database, slug: string): Promise<QuoteD
   const quote = await db.query.quotes.findFirst({
     where: eq(quotes.slug, slug),
     with: {
+      edition: { with: { work: true } },
       lines: {
         orderBy: (line, { asc }) => [asc(line.ordinal)],
         with: { attributions: { with: { character: true } } },
@@ -124,6 +142,28 @@ export async function getQuoteBySlug(db: Database, slug: string): Promise<QuoteD
   return {
     id: quote.id,
     slug: quote.slug,
+    position: {
+      startMs: quote.startMs,
+      endMs: quote.endMs,
+      chapter: quote.chapter,
+      page: quote.page,
+      percent: quote.percent,
+      locationNote: quote.locationNote,
+    },
+    source: {
+      work: {
+        id: quote.edition.work.id,
+        title: quote.edition.work.title,
+        slug: quote.edition.work.slug,
+        type: quote.edition.work.type,
+        year: quote.edition.work.year,
+      },
+      edition: {
+        id: quote.edition.id,
+        format: quote.edition.format,
+        label: quote.edition.label,
+      },
+    },
     lines: quote.lines.map((line) => ({
       ordinal: line.ordinal,
       type: line.type,
@@ -138,4 +178,37 @@ export async function getQuoteBySlug(db: Database, slug: string): Promise<QuoteD
       })),
     })),
   };
+}
+
+export type QuoteCard = {
+  id: string;
+  slug: string;
+  preview: string;
+  work: { title: string; slug: string; type: WorkType; year: number | null };
+};
+
+/** Most recently added quotes, with their source work, for the homepage. */
+export async function listRecentQuotes(db: Database, limit = 12): Promise<QuoteCard[]> {
+  const rows = await db
+    .select({
+      id: quotes.id,
+      slug: quotes.slug,
+      searchText: quotes.searchText,
+      workTitle: works.title,
+      workSlug: works.slug,
+      workType: works.type,
+      workYear: works.year,
+    })
+    .from(quotes)
+    .innerJoin(editions, eq(editions.id, quotes.editionId))
+    .innerJoin(works, eq(works.id, editions.workId))
+    .orderBy(desc(quotes.createdAt), desc(quotes.id))
+    .limit(limit);
+
+  return rows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    preview: quotePreview(row.searchText),
+    work: { title: row.workTitle, slug: row.workSlug, type: row.workType, year: row.workYear },
+  }));
 }

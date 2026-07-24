@@ -1,9 +1,33 @@
-export const metadata = { title: "iqdb", description: "Quote database" };
+import type { Metadata } from "next";
+import "./globals.css";
+import { SiteHeader } from "./_components/SiteHeader";
+import { SiteFooter } from "./_components/SiteFooter";
+
+export const metadata: Metadata = {
+  title: {
+    default: "iqdb — a database of quotations",
+    template: "%s · iqdb",
+  },
+  description: "A typeset database of quotations from film, television, and books.",
+};
+
+// Applies a saved manual theme before first paint to avoid a flash of the wrong theme.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
+        <SiteHeader />
+        <main id="main" className="site-main" tabIndex={-1}>
+          {children}
+        </main>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

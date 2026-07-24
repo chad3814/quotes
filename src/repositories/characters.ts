@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, countDistinct, eq } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { AttributionRole } from "@/db/schema";
 import { attributions, characters, lines, quotes } from "@/db/schema";
@@ -25,6 +25,35 @@ export async function createCharacter(
 }
 
 export type QuoteSummary = { id: string; slug: string; preview: string };
+
+export type CharacterListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  quoteCount: number;
+};
+
+/** Lists characters with a count of the distinct quotes they appear in (any role). */
+export async function listCharacters(
+  db: Database,
+  options: { limit?: number; offset?: number } = {},
+): Promise<CharacterListItem[]> {
+  return db
+    .select({
+      id: characters.id,
+      name: characters.name,
+      slug: characters.slug,
+      quoteCount: countDistinct(quotes.id),
+    })
+    .from(characters)
+    .leftJoin(attributions, eq(attributions.characterId, characters.id))
+    .leftJoin(lines, eq(lines.id, attributions.lineId))
+    .leftJoin(quotes, eq(quotes.id, lines.quoteId))
+    .groupBy(characters.id)
+    .orderBy(asc(characters.name))
+    .limit(options.limit ?? 500)
+    .offset(options.offset ?? 0);
+}
 
 export type CharacterPage = {
   character: { id: string; name: string; slug: string; description: string | null };

@@ -4,6 +4,7 @@ import { createWork } from "@/repositories/works";
 import { createEdition } from "@/repositories/editions";
 import { createQuote } from "@/repositories/quotes";
 import { searchQuotes } from "@/repositories/search";
+import { renderHeadline } from "@/lib/highlight";
 
 async function seed(db: Awaited<ReturnType<typeof createTestDb>>) {
   const work = await createWork(db, { type: "MOVIE", title: "A New Hope" });
@@ -18,7 +19,7 @@ describe("searchQuotes", () => {
     await seed(db);
     const results = await searchQuotes(db, "force");
     expect(results).toHaveLength(1);
-    expect(results[0].headline.toLowerCase()).toContain("<b>force</b>");
+    expect(renderHeadline(results[0].headline).toLowerCase()).toContain("<mark>force</mark>");
     expect(results[0].rank).toBeGreaterThan(0);
   });
 
