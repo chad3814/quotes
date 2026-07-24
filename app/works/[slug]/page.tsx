@@ -74,6 +74,7 @@ export default async function WorkPage({ params }: { params: Params }) {
           {work.title}
           {admin && <AdminEditLink href={`/admin/works/${work.id}`} label="Edit this work" />}
         </h1>
+        {work.byline && <p className="page-byline">by {work.byline}</p>}
         <p className="page-subtitle tnum">{subtitleParts.join(" · ")}</p>
       </div>
 

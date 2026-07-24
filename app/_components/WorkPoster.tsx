@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { WorkType } from "@/db/schema";
 import { workTypeLabel } from "@/lib/format";
-import { tmdbPosterUrl } from "@/lib/tmdb-image";
+import { posterImageUrl } from "@/lib/tmdb-image";
 
 type Props = {
   posterPath: string | null;
@@ -14,7 +14,7 @@ type Props = {
  * a typeset placeholder (2:3) so the layout is consistent either way.
  */
 export function WorkPoster({ posterPath, title, type }: Props) {
-  const url = tmdbPosterUrl(posterPath, "w342");
+  const url = posterImageUrl(posterPath, "w342");
 
   return (
     <div className="poster">

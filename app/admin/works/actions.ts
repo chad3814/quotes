@@ -34,7 +34,7 @@ export async function createWorkAction(payload: CreateWorkPayload): Promise<{ er
   try {
     if (payload.mode === "tmdb") {
       const tmdb = createTmdbClient();
-      const summary = await ingestTitle(db, tmdb, { type: payload.tmdbType, id: payload.tmdbId });
+      const summary = await ingestTitle(db, tmdb, { source: "tmdb", type: payload.tmdbType, id: payload.tmdbId });
       workId = summary.workId;
     } else {
       const title = payload.title.trim();

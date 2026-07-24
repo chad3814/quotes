@@ -691,6 +691,13 @@ b.hl {
   color: var(--muted);
 }
 
+.page-byline {
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  color: var(--text);
+  margin-block: var(--space-1);
+}
+
 .page-subtitle a {
   color: var(--accent);
 }

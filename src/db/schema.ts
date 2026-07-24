@@ -70,9 +70,12 @@ export const works = pgTable(
     seasonNumber: integer("season_number"),
     episodeNumber: integer("episode_number"),
     synopsis: text("synopsis"),
-    // TMDB image path (poster for movies/series, still for episodes), e.g. "/abc.jpg".
-    // The full URL is built at render time; null falls back to a placeholder.
+    // TMDB image path (poster for movies/series, still for episodes), e.g. "/abc.jpg",
+    // OR a full image URL (e.g. a book cover from IBDB). The full URL is built at
+    // render time; null falls back to a placeholder.
     posterPath: text("poster_path"),
+    // Denormalized creator credit — e.g. a book's author(s) joined ("Matt Dinniman").
+    byline: text("byline"),
     ...timestamps,
   },
   (t) => [

@@ -3,11 +3,11 @@ import { tmdbInputForWork } from "@/lib/tmdb";
 
 describe("tmdbInputForWork", () => {
   it("maps a movie to a movie ingest input", () => {
-    expect(tmdbInputForWork("MOVIE", "11")).toEqual({ type: "movie", id: 11 });
+    expect(tmdbInputForWork("MOVIE", "11")).toEqual({ source: "tmdb", type: "movie", id: 11 });
   });
 
   it("maps a TV series to a tv ingest input", () => {
-    expect(tmdbInputForWork("TV_SERIES", "1399")).toEqual({ type: "tv", id: 1399 });
+    expect(tmdbInputForWork("TV_SERIES", "1399")).toEqual({ source: "tmdb", type: "tv", id: 1399 });
   });
 
   it("returns null for episodes and books (not re-syncable as top-level titles)", () => {

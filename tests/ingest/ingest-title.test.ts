@@ -31,7 +31,7 @@ class FakeTmdb implements TmdbClient {
 describe("ingestTitle", () => {
   it("ingests a movie", async () => {
     const db = await createTestDb();
-    const summary = await ingestTitle(db, new FakeTmdb(), { type: "movie", id: 11 });
+    const summary = await ingestTitle(db, new FakeTmdb(), { source: "tmdb", type: "movie", id: 11 });
     expect(summary.type).toBe("movie");
     expect(summary.workCreated).toBe(true);
     expect(await db.select().from(works)).toHaveLength(1);
@@ -39,7 +39,7 @@ describe("ingestTitle", () => {
 
   it("ingests a series with all episodes as child works", async () => {
     const db = await createTestDb();
-    const summary = await ingestTitle(db, new FakeTmdb(), { type: "tv", id: 1399 });
+    const summary = await ingestTitle(db, new FakeTmdb(), { source: "tmdb", type: "tv", id: 1399 });
     expect(summary.episodesCreated).toBe(2);
     const rows = await db.select().from(works);
     expect(rows).toHaveLength(3); // series + 2 episodes
@@ -49,11 +49,11 @@ describe("ingestTitle", () => {
 
   it("is idempotent and picks up newly-added episodes on re-run", async () => {
     const db = await createTestDb();
-    await ingestTitle(db, new FakeTmdb(), { type: "tv", id: 1399 });
+    await ingestTitle(db, new FakeTmdb(), { source: "tmdb", type: "tv", id: 1399 });
     const withNewEpisode: Record<number, TmdbSeason> = {
       1: { season_number: 1, episodes: [...SEASON_1.episodes, { id: 63058, episode_number: 3, season_number: 1, name: "Ep3", overview: "", runtime: 58, air_date: "2011-05-01" }] },
     };
-    const summary = await ingestTitle(db, new FakeTmdb(withNewEpisode), { type: "tv", id: 1399 });
+    const summary = await ingestTitle(db, new FakeTmdb(withNewEpisode), { source: "tmdb", type: "tv", id: 1399 });
     expect(summary.episodesCreated).toBe(1);
     expect(summary.episodesUpdated).toBe(2);
     expect(await db.select().from(works)).toHaveLength(4); // series + 3 episodes, no duplicates
