@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SiteHeader } from "./_components/SiteHeader";
 import { SiteFooter } from "./_components/SiteFooter";
+import { AuthButton } from "./_components/AuthButton";
 
 export const metadata: Metadata = {
   title: {
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <SiteHeader />
+        <SiteHeader authSlot={<AuthButton />} />
         <main id="main" className="site-main" tabIndex={-1}>
           {children}
         </main>

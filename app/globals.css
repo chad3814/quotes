@@ -324,6 +324,53 @@ main:focus {
   border-bottom-color: var(--accent);
 }
 
+/* Auth controls in the header */
+.site-header__auth {
+  display: flex;
+  align-items: center;
+}
+
+.auth {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.auth__avatar {
+  display: block;
+  border-radius: 50%;
+  border: var(--hairline);
+}
+
+.auth__name {
+  color: var(--muted);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth__signin {
+  font-size: var(--text-sm);
+}
+
+.auth__signout {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.auth__signout:hover {
+  color: var(--accent);
+}
+
 /* --------------------------------------------------------------------------
    Search input
    -------------------------------------------------------------------------- */

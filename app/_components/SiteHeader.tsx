@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SearchInput } from "./SearchInput";
@@ -10,7 +11,7 @@ const NAV_ITEMS = [
   { href: "/about", label: "About" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ authSlot }: { authSlot?: ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
 
@@ -36,6 +37,7 @@ export function SiteHeader() {
           })}
         </nav>
         {!isHome && <SearchInput variant="compact" />}
+        {authSlot && <div className="site-header__auth">{authSlot}</div>}
       </div>
     </header>
   );
