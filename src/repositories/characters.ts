@@ -24,6 +24,22 @@ export async function createCharacter(
   return row;
 }
 
+/**
+ * Returns the id/slug of the character with this exact name, creating one if
+ * none exists. Used by the admin quote authoring flow where speakers/subjects
+ * are entered by name.
+ */
+export async function findOrCreateCharacter(db: Database, name: string): Promise<{ id: string; slug: string }> {
+  const trimmed = name.trim();
+  const existing = await db
+    .select({ id: characters.id, slug: characters.slug })
+    .from(characters)
+    .where(eq(characters.name, trimmed))
+    .limit(1);
+  if (existing.length > 0) return existing[0];
+  return createCharacter(db, { name: trimmed });
+}
+
 export type QuoteSummary = { id: string; slug: string; preview: string };
 
 export type CharacterListItem = {

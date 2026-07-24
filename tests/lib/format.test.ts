@@ -4,6 +4,7 @@ import {
   episodeCode,
   formatPosition,
   formatTimecode,
+  parseTimecode,
   pluralize,
   workTypeLabel,
 } from "@/lib/format";
@@ -62,5 +63,28 @@ describe("pluralize", () => {
     expect(pluralize(1, "quote")).toBe("1 quote");
     expect(pluralize(3, "quote")).toBe("3 quotes");
     expect(pluralize(0, "quote")).toBe("0 quotes");
+  });
+});
+
+describe("parseTimecode", () => {
+  it("parses h:mm:ss and m:ss", () => {
+    expect(parseTimecode("1:23:45")).toBe((1 * 3600 + 23 * 60 + 45) * 1000);
+    expect(parseTimecode("2:05")).toBe(125_000);
+  });
+  it("parses a bare number of seconds", () => {
+    expect(parseTimecode("90")).toBe(90_000);
+    expect(parseTimecode("0")).toBe(0);
+  });
+  it("returns null for empty or invalid input", () => {
+    expect(parseTimecode("")).toBeNull();
+    expect(parseTimecode("   ")).toBeNull();
+    expect(parseTimecode("abc")).toBeNull();
+    expect(parseTimecode("1:2:3:4")).toBeNull();
+    expect(parseTimecode("1:xx")).toBeNull();
+  });
+  it("round-trips with formatTimecode", () => {
+    const ms = parseTimecode("1:05:09");
+    expect(ms).not.toBeNull();
+    expect(formatTimecode(ms as number)).toBe("1:05:09");
   });
 });

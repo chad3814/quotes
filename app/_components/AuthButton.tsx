@@ -1,5 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
+import { isAdmin } from "@/lib/admin";
 
 function SignIn() {
   return (
@@ -38,8 +40,15 @@ export async function AuthButton() {
     return <SignIn />;
   }
 
+  const admin = isAdmin(session.user.githubId);
+
   return (
     <div className="auth">
+      {admin && (
+        <Link href="/admin" className="nav-link auth__admin">
+          Admin
+        </Link>
+      )}
       {session.user.image && (
         <Image
           src={session.user.image}

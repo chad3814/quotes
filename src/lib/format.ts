@@ -77,3 +77,21 @@ export function formatPosition(position: PositionParts): string[] {
 export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
+
+/**
+ * Parses a timecode string into milliseconds. Accepts "h:mm:ss", "m:ss", or a
+ * bare integer number of seconds. Returns null for empty or unparseable input.
+ */
+export function parseTimecode(input: string): number | null {
+  const trimmed = input.trim();
+  if (trimmed === "") return null;
+  if (/^\d+$/.test(trimmed)) return Number(trimmed) * 1000;
+
+  const parts = trimmed.split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+  if (!parts.every((part) => /^\d+$/.test(part))) return null;
+
+  const nums = parts.map(Number);
+  const seconds = nums.length === 3 ? nums[0] * 3600 + nums[1] * 60 + nums[2] : nums[0] * 60 + nums[1];
+  return seconds * 1000;
+}
