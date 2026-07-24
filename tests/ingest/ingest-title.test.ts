@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
 import { createTestDb } from "../setup/test-db";
 import { works } from "@/db/schema";
 import { ingestTitle } from "@/ingest/ingest-title";
