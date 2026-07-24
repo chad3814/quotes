@@ -1302,3 +1302,23 @@ textarea.admin-form__control {
 .admin-edit-link:hover {
   color: var(--accent);
 }
+
+/* Season grouping on a series' work page */
+.season-group {
+  margin-bottom: var(--space-6);
+}
+
+.season-group__title {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
+  border-bottom: var(--hairline);
+}
+
+.season-group__count {
+  color: var(--muted);
+  font-weight: 400;
+}

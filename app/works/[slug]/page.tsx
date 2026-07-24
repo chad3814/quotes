@@ -44,6 +44,16 @@ export default async function WorkPage({ params }: { params: Params }) {
   if (work.year) subtitleParts.push(String(work.year));
   subtitleParts.push(pluralize(totalQuotes, "quote"));
 
+  // Group episodes by season (children arrive ordered by season, then episode).
+  const seasonGroups: { season: number | null; episodes: typeof work.children }[] = [];
+  for (const child of work.children) {
+    const last = seasonGroups[seasonGroups.length - 1];
+    if (last && last.season === child.seasonNumber) last.episodes.push(child);
+    else seasonGroups.push({ season: child.seasonNumber, episodes: [child] });
+  }
+  const seasonLabel = (season: number | null) =>
+    season == null ? "Episodes" : season === 0 ? "Specials" : `Season ${season}`;
+
   return (
     <div className="work-layout">
       <WorkPoster posterPath={work.posterPath} title={work.title} type={work.type} />
@@ -89,22 +99,30 @@ export default async function WorkPage({ params }: { params: Params }) {
       {work.children.length > 0 && (
         <section>
           <h2 className="section-label">Episodes ({work.children.length})</h2>
-          <div className="rows">
-            {work.children.map((child) => {
-              const childCode = episodeCode(child.seasonNumber, child.episodeNumber);
-              return (
-                <div key={child.id} className="row">
-                  <Link href={`/works/${child.slug}`} className="row-link">
-                    <span>
-                      {childCode && <span className="row__eyebrow">{childCode}</span>}
-                      <span className="row__title">{child.title}</span>
-                    </span>
-                    <span className="row__meta tnum">{pluralize(child.quoteCount, "quote")}</span>
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
+          {seasonGroups.map((group) => (
+            <div key={group.season ?? "none"} className="season-group">
+              <h3 className="season-group__title">
+                {seasonLabel(group.season)}
+                <span className="season-group__count tnum"> · {pluralize(group.episodes.length, "episode")}</span>
+              </h3>
+              <div className="rows">
+                {group.episodes.map((child) => {
+                  const childCode = episodeCode(child.seasonNumber, child.episodeNumber);
+                  return (
+                    <div key={child.id} className="row">
+                      <Link href={`/works/${child.slug}`} className="row-link">
+                        <span>
+                          {childCode && <span className="row__eyebrow">{childCode}</span>}
+                          <span className="row__title">{child.title}</span>
+                        </span>
+                        <span className="row__meta tnum">{pluralize(child.quoteCount, "quote")}</span>
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </section>
       )}
 

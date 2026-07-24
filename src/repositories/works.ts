@@ -56,7 +56,8 @@ export type ListWorksOptions = {
   parentId?: string;
   /** Restrict to top-level works (no parent) — movies, series, books. */
   topLevelOnly?: boolean;
-  limit?: number;
+  /** Max rows; defaults to 500. Pass null for no limit (e.g. all episodes of a long series). */
+  limit?: number | null;
   offset?: number;
 };
 
@@ -71,7 +72,7 @@ export async function listWorks(db: Database, options: ListWorksOptions = {}): P
   if (options.parentId) conditions.push(eq(works.parentWorkId, options.parentId));
   if (options.topLevelOnly) conditions.push(isNull(works.parentWorkId));
 
-  return db
+  let query = db
     .select({
       id: works.id,
       type: works.type,
@@ -88,8 +89,13 @@ export async function listWorks(db: Database, options: ListWorksOptions = {}): P
     .where(conditions.length ? and(...conditions) : undefined)
     .groupBy(works.id)
     .orderBy(asc(works.seasonNumber), asc(works.episodeNumber), asc(works.title))
-    .limit(options.limit ?? 500)
-    .offset(options.offset ?? 0);
+    .$dynamic();
+
+  // limit: null means "no limit"; undefined falls back to a safe default.
+  if (options.limit !== null) query = query.limit(options.limit ?? 500);
+  if (options.offset) query = query.offset(options.offset);
+
+  return query;
 }
 
 export type WorkPage = {
@@ -179,7 +185,8 @@ export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPag
   });
   if (!work) return null;
 
-  const children = await listWorks(db, { parentId: work.id });
+  // No limit: a long-running series (e.g. The Simpsons, 800+ episodes) must list them all.
+  const children = await listWorks(db, { parentId: work.id, limit: null });
 
   return {
     id: work.id,
