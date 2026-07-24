@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { EditionFormat } from "@/db/schema";
 import { editions } from "@/db/schema";
@@ -26,4 +27,15 @@ export async function createEdition(db: Database, input: CreateEditionInput): Pr
     })
     .returning({ id: editions.id });
   return row;
+}
+
+export type UpdateEditionFields = {
+  format?: EditionFormat;
+  runtimeMs?: number | null;
+  language?: string | null;
+  releaseDate?: string | null;
+};
+
+export async function updateEdition(db: Database, id: string, fields: UpdateEditionFields): Promise<void> {
+  await db.update(editions).set({ ...fields, updatedAt: new Date() }).where(eq(editions.id, id));
 }

@@ -51,6 +51,20 @@ export type WorkPage = {
   }[];
 };
 
+export type UpdateWorkFields = {
+  title?: string;
+  originalTitle?: string | null;
+  year?: number | null;
+  seasonNumber?: number | null;
+  episodeNumber?: number | null;
+  synopsis?: string | null;
+  parentWorkId?: string | null;
+};
+
+export async function updateWork(db: Database, id: string, fields: UpdateWorkFields): Promise<void> {
+  await db.update(works).set({ ...fields, updatedAt: new Date() }).where(eq(works.id, id));
+}
+
 export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPage | null> {
   const work = await db.query.works.findFirst({
     where: eq(works.slug, slug),
