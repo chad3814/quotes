@@ -100,7 +100,11 @@ export default async function WorkPage({ params }: { params: Params }) {
         <section>
           <h2 className="section-label">Episodes ({work.children.length})</h2>
           {seasonGroups.map((group) => (
-            <details key={group.season ?? "none"} className="season-group">
+            <details
+              key={group.season ?? "none"}
+              className="season-group"
+              open={seasonGroups.length === 1}
+            >
               <summary className="season-group__summary">
                 <h3 className="season-group__title">{seasonLabel(group.season)}</h3>
                 <span className="season-group__count tnum">{pluralize(group.episodes.length, "episode")}</span>
