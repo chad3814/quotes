@@ -22,6 +22,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
     }),
   ],
+  logger: {
+    error(error: Error) {
+      // A stale/invalid session cookie (e.g. left over from a different AUTH_SECRET
+      // or another app on localhost) can't be decrypted, so Auth.js throws
+      // JWTSessionError on every request until it's cleared. It already treats this
+      // as "signed out", so downgrade the noisy stack trace to a single line and
+      // surface every other auth error normally.
+      if (error.name === "JWTSessionError") {
+        console.warn(
+          "[auth] Ignoring an undecryptable session cookie (stale token) — clear cookies for this site to remove this notice.",
+        );
+        return;
+      }
+      console.error(error);
+    },
+  },
   callbacks: {
     // `profile` is only present on the initial sign-in; persist the numeric GitHub
     // user id on the token so it survives subsequent (profile-less) calls.
