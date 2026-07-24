@@ -19,7 +19,7 @@ export function SiteHeader({ authSlot }: { authSlot?: ReactNode }) {
     <header className="site-header">
       <div className="wide site-header__inner">
         <Link href="/" className="wordmark">
-          iqdb
+          TQDb
         </Link>
         <nav className="site-nav" aria-label="Primary">
           {NAV_ITEMS.map((item) => {

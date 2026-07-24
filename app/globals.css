@@ -1,5 +1,5 @@
 /* ==========================================================================
-   iqdb — "Colophon" design system
+   TQDb — "Colophon" design system
    A typeset book of quotations: warm paper, serif quotes as the hero, sans
    chrome that recedes, oxblood accents, hairlines only. Plain CSS, no libs.
    ========================================================================== */
@@ -1149,4 +1149,70 @@ textarea.admin-form__control {
 .admin-form__actions {
   display: flex;
   gap: var(--space-4);
+}
+
+/* --------------------------------------------------------------------------
+   Work poster
+   Content stays centered on the page; on wide screens the poster hangs in the
+   left margin, and on narrow screens it stacks above the content.
+   -------------------------------------------------------------------------- */
+.work-layout {
+  position: relative;
+}
+
+/* Stacked (mobile / narrow) — poster appears before the content. */
+.poster {
+  width: 9rem;
+  margin: 0 auto var(--space-6);
+}
+
+.poster__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.poster__placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  aspect-ratio: 2 / 3;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.poster__ph-type {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.poster__ph-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  line-height: var(--lh-tight);
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Wide screens: hang the poster in the left margin without moving the centered
+   content. Its right edge sits one gap to the left of the content column. */
+@media (min-width: 80rem) {
+  .poster {
+    position: absolute;
+    top: 0;
+    right: calc(50% + (var(--container) / 2) + var(--space-6));
+    width: 11rem;
+    margin: 0;
+  }
 }

@@ -5,9 +5,10 @@ import { SiteFooter } from "./_components/SiteFooter";
 import { AuthButton } from "./_components/AuthButton";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tqdb.org"),
   title: {
-    default: "iqdb — a database of quotations",
-    template: "%s · iqdb",
+    default: "TQDb — The Quote Database",
+    template: "%s · TQDb",
   },
   description: "A typeset database of quotations from film, television, and books.",
 };

@@ -11,6 +11,7 @@ export type TmdbMovie = {
   runtime: number | null;
   overview: string;
   original_language: string;
+  poster_path?: string | null;
   external_ids: TmdbExternalIds;
 };
 
@@ -23,6 +24,7 @@ export type TmdbSeries = {
   first_air_date: string | null;
   overview: string;
   seasons: TmdbSeasonSummary[];
+  poster_path?: string | null;
   external_ids: TmdbExternalIds;
 };
 
@@ -34,6 +36,7 @@ export type TmdbEpisode = {
   overview: string;
   runtime: number | null;
   air_date: string | null;
+  still_path?: string | null;
 };
 
 export type TmdbSeason = {

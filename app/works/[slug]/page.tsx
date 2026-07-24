@@ -6,6 +6,7 @@ import { getDb } from "@/db/client";
 import { getWorkBySlug } from "@/repositories/works";
 import { editionFormatLabel, episodeCode, pluralize, workTypeLabel } from "@/lib/format";
 import { QuoteList } from "../../_components/QuoteList";
+import { WorkPoster } from "../../_components/WorkPoster";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,9 @@ export default async function WorkPage({ params }: { params: Params }) {
   subtitleParts.push(pluralize(totalQuotes, "quote"));
 
   return (
-    <div className="container">
+    <div className="work-layout">
+      <WorkPoster posterPath={work.posterPath} title={work.title} type={work.type} />
+      <div className="container">
       <div className="page-header">
         <p className="eyebrow">
           {workTypeLabel(work.type)}
@@ -110,6 +113,7 @@ export default async function WorkPage({ params }: { params: Params }) {
       ) : (
         work.children.length === 0 && <p className="muted-note">No quotes yet.</p>
       )}
+      </div>
     </div>
   );
 }

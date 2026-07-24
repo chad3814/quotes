@@ -21,7 +21,7 @@ export default async function HomePage() {
   return (
     <div className="wide home">
       <div className="home__hero">
-        <h1 className="sr-only">iqdb — a database of quotations</h1>
+        <h1 className="sr-only">TQDb — The Quote Database</h1>
         <p className="eyebrow">A quote archive</p>
         {featured ? (
           <>

@@ -15,6 +15,7 @@ export type CreateWorkInput = {
   seasonNumber?: number;
   episodeNumber?: number;
   synopsis?: string;
+  posterPath?: string | null;
   slug?: string;
 };
 
@@ -31,6 +32,7 @@ export async function createWork(db: Database, input: CreateWorkInput): Promise<
       seasonNumber: input.seasonNumber ?? null,
       episodeNumber: input.episodeNumber ?? null,
       synopsis: input.synopsis ?? null,
+      posterPath: input.posterPath ?? null,
       slug,
     })
     .returning({ id: works.id, slug: works.slug });
@@ -97,6 +99,7 @@ export type WorkPage = {
   slug: string;
   year: number | null;
   synopsis: string | null;
+  posterPath: string | null;
   seasonNumber: number | null;
   episodeNumber: number | null;
   parent: { title: string; slug: string; type: WorkType } | null;
@@ -116,6 +119,7 @@ export type UpdateWorkFields = {
   seasonNumber?: number | null;
   episodeNumber?: number | null;
   synopsis?: string | null;
+  posterPath?: string | null;
   parentWorkId?: string | null;
 };
 
@@ -149,6 +153,7 @@ export async function getWorkBySlug(db: Database, slug: string): Promise<WorkPag
     slug: work.slug,
     year: work.year,
     synopsis: work.synopsis,
+    posterPath: work.posterPath,
     seasonNumber: work.seasonNumber,
     episodeNumber: work.episodeNumber,
     parent: work.parent

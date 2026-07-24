@@ -5,7 +5,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="wide site-footer__inner">
-        <div className="site-footer__word">iqdb</div>
+        <div className="site-footer__word">TQDb</div>
         <p>A typeset database of quotations from film, television, and books.</p>
         <nav className="site-footer__nav" aria-label="Footer">
           <Link href="/works">Works</Link>

@@ -8,7 +8,7 @@ import type { MappedWork } from "@/ingest/mappers";
 const MOVIE: MappedWork = {
   tmdbId: 11,
   tmdbUrl: "https://www.themoviedb.org/movie/11",
-  work: { type: "MOVIE", title: "Star Wars", originalTitle: "Star Wars", year: 1977, seasonNumber: null, episodeNumber: null, synopsis: "..." },
+  work: { type: "MOVIE", title: "Star Wars", originalTitle: "Star Wars", year: 1977, seasonNumber: null, episodeNumber: null, synopsis: "...", posterPath: "/sw.jpg" },
   edition: { format: "THEATRICAL", runtimeMs: 7_260_000, language: "en", releaseDate: "1977-05-25" },
   refs: [
     { provider: "TMDB", externalId: "11", url: "https://www.themoviedb.org/movie/11" },
@@ -47,7 +47,7 @@ describe("upsertWork", () => {
     const episode: MappedWork = {
       tmdbId: 63056,
       tmdbUrl: "u",
-      work: { type: "TV_EPISODE", title: "Ep", originalTitle: null, year: 2011, seasonNumber: 1, episodeNumber: 1, synopsis: null },
+      work: { type: "TV_EPISODE", title: "Ep", originalTitle: null, year: 2011, seasonNumber: 1, episodeNumber: 1, synopsis: null, posterPath: null },
       edition: { format: "TV_BROADCAST", runtimeMs: null, language: null, releaseDate: null },
       refs: [{ provider: "TMDB", externalId: "63056", url: "u" }],
     };

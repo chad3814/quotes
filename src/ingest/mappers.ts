@@ -19,6 +19,7 @@ export type MappedWork = {
     seasonNumber: number | null;
     episodeNumber: number | null;
     synopsis: string | null;
+    posterPath: string | null;
   };
   edition: MappedEdition | null;
   refs: MappedRef[];
@@ -58,6 +59,7 @@ export function mapMovie(movie: TmdbMovie): MappedWork {
       seasonNumber: null,
       episodeNumber: null,
       synopsis: nullIfEmpty(movie.overview),
+      posterPath: movie.poster_path ?? null,
     },
     edition: {
       format: "THEATRICAL",
@@ -85,6 +87,7 @@ export function mapSeries(series: TmdbSeries): MappedWork {
       seasonNumber: null,
       episodeNumber: null,
       synopsis: nullIfEmpty(series.overview),
+      posterPath: series.poster_path ?? null,
     },
     edition: null,
     refs: [
@@ -107,6 +110,7 @@ export function mapEpisode(seriesTmdbId: number, episode: TmdbEpisode): MappedWo
       seasonNumber: episode.season_number,
       episodeNumber: episode.episode_number,
       synopsis: nullIfEmpty(episode.overview),
+      posterPath: episode.still_path ?? null,
     },
     edition: {
       format: "TV_BROADCAST",

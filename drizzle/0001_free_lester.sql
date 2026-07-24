@@ -1,0 +1,1 @@
+ALTER TABLE "works" ADD COLUMN "poster_path" text;

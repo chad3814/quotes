@@ -7,13 +7,13 @@ export default function AboutPage() {
   return (
     <div className="container">
       <div className="page-header">
-        <h1 className="page-title">About iqdb</h1>
+        <h1 className="page-title">About TQDb</h1>
         <p className="page-subtitle">A typeset database of quotations.</p>
       </div>
 
       <div className="prose">
         <p>
-          iqdb collects memorable lines from film, television, and books and records not just the words but
+          TQDb collects memorable lines from film, television, and books and records not just the words but
           their context — who said them, who they were about, the edition they appear in, and where in the
           runtime or on the page they land.
         </p>

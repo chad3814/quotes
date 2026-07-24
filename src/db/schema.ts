@@ -70,6 +70,9 @@ export const works = pgTable(
     seasonNumber: integer("season_number"),
     episodeNumber: integer("episode_number"),
     synopsis: text("synopsis"),
+    // TMDB image path (poster for movies/series, still for episodes), e.g. "/abc.jpg".
+    // The full URL is built at render time; null falls back to a placeholder.
+    posterPath: text("poster_path"),
     ...timestamps,
   },
   (t) => [

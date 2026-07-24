@@ -28,6 +28,7 @@ export async function upsertWork(db: Database, mapped: MappedWork, parentWorkId:
       seasonNumber: w.seasonNumber ?? undefined,
       episodeNumber: w.episodeNumber ?? undefined,
       synopsis: w.synopsis ?? undefined,
+      posterPath: w.posterPath,
     });
     workId = created.id;
   } else {
@@ -38,6 +39,7 @@ export async function upsertWork(db: Database, mapped: MappedWork, parentWorkId:
       seasonNumber: w.seasonNumber,
       episodeNumber: w.episodeNumber,
       synopsis: w.synopsis,
+      posterPath: w.posterPath,
       parentWorkId,
     });
   }

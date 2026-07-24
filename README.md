@@ -1,3 +1,3 @@
-# Internet Quote Database
+# TQDb — The Quote Database
 
-Movie/TV/Book Quotes
+Memorable quotes from movies, TV, and books. Production: [tqdb.org](https://tqdb.org).
