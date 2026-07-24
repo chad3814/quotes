@@ -100,11 +100,11 @@ export default async function WorkPage({ params }: { params: Params }) {
         <section>
           <h2 className="section-label">Episodes ({work.children.length})</h2>
           {seasonGroups.map((group) => (
-            <div key={group.season ?? "none"} className="season-group">
-              <h3 className="season-group__title">
-                {seasonLabel(group.season)}
-                <span className="season-group__count tnum"> · {pluralize(group.episodes.length, "episode")}</span>
-              </h3>
+            <details key={group.season ?? "none"} className="season-group">
+              <summary className="season-group__summary">
+                <h3 className="season-group__title">{seasonLabel(group.season)}</h3>
+                <span className="season-group__count tnum">{pluralize(group.episodes.length, "episode")}</span>
+              </summary>
               <div className="rows">
                 {group.episodes.map((child) => {
                   const childCode = episodeCode(child.seasonNumber, child.episodeNumber);
@@ -121,7 +121,7 @@ export default async function WorkPage({ params }: { params: Params }) {
                   );
                 })}
               </div>
-            </div>
+            </details>
           ))}
         </section>
       )}

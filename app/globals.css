@@ -1303,22 +1303,66 @@ textarea.admin-form__control {
   color: var(--accent);
 }
 
-/* Season grouping on a series' work page */
+/* Season accordion on a series' work page (native <details>, collapsed by default) */
 .season-group {
-  margin-bottom: var(--space-6);
+  border-bottom: var(--hairline);
+}
+
+.season-group__summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.season-group__summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Custom disclosure chevron: points right when closed, down when open. */
+.season-group__summary::before {
+  content: "";
+  flex: none;
+  align-self: center;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(-45deg);
+}
+
+.season-group[open] .season-group__summary::before {
+  transform: rotate(45deg);
 }
 
 .season-group__title {
+  margin: 0;
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text);
-  padding-bottom: var(--space-2);
-  margin-bottom: var(--space-1);
-  border-bottom: var(--hairline);
+}
+
+.season-group__summary:hover .season-group__title,
+.season-group__summary:hover::before {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .season-group__count {
+  margin-left: auto;
   color: var(--muted);
-  font-weight: 400;
+  font-size: var(--text-sm);
+}
+
+.season-group .rows {
+  padding-bottom: var(--space-4);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .season-group__summary::before {
+    transition: transform 150ms ease;
+  }
 }
