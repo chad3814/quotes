@@ -63,7 +63,7 @@ export function mapMovie(movie: TmdbMovie): MappedWork {
       format: "THEATRICAL",
       runtimeMs: runtimeToMs(movie.runtime),
       language: nullIfEmpty(movie.original_language),
-      releaseDate: movie.release_date ?? null,
+      releaseDate: nullIfEmpty(movie.release_date ?? ""),
     },
     refs: [
       { provider: "TMDB", externalId: String(movie.id), url: tmdbUrl },
@@ -112,7 +112,7 @@ export function mapEpisode(seriesTmdbId: number, episode: TmdbEpisode): MappedWo
       format: "TV_BROADCAST",
       runtimeMs: runtimeToMs(episode.runtime),
       language: null,
-      releaseDate: episode.air_date ?? null,
+      releaseDate: nullIfEmpty(episode.air_date ?? ""),
     },
     refs: [{ provider: "TMDB", externalId: String(episode.id), url: tmdbUrl }],
   };

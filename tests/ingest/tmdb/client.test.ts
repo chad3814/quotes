@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createTmdbClient, TmdbError } from "@/ingest/tmdb/client";
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse<T>(body: T, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
 

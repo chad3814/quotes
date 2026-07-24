@@ -6,6 +6,11 @@ import { findEntityIdByRef, upsertExternalReference } from "@/repositories/exter
 
 export type UpsertResult = { workId: string; workCreated: boolean; editionCreated: boolean };
 
+// Idempotency here assumes a single writer: the create-then-insert-ref sequence below is not
+// guarded by a DB uniqueness constraint on the TMDB id itself, so two concurrent ingests of the
+// same title could each pass the findEntityIdByRef check and create a duplicate work row before
+// either one writes its keying ref. The CLI is single-process/manual, so this is an accepted
+// assumption rather than a bug to fix now.
 export async function upsertWork(db: Database, mapped: MappedWork, parentWorkId: string | null): Promise<UpsertResult> {
   const tmdbId = String(mapped.tmdbId);
   const w = mapped.work;

@@ -30,6 +30,11 @@ describe("mapMovie", () => {
     expect(mapped.edition?.runtimeMs).toBeNull();
     expect(mapped.refs.map((r) => r.provider)).toEqual(["TMDB"]);
   });
+
+  it("empty-string release_date maps to a null edition releaseDate", () => {
+    const mapped = mapMovie({ ...MOVIE, release_date: "" });
+    expect(mapped.edition?.releaseDate).toBeNull();
+  });
 });
 
 describe("mapSeries", () => {
@@ -70,5 +75,19 @@ describe("mapEpisode", () => {
     expect(mapped.edition).toEqual({ format: "TV_BROADCAST", runtimeMs: 62 * 60_000, language: null, releaseDate: "2011-04-17" });
     expect(mapped.refs.map((r) => r.provider)).toEqual(["TMDB"]);
     expect(mapped.tmdbUrl).toBe("https://www.themoviedb.org/tv/1399/season/1/episode/1");
+  });
+
+  it("empty-string air_date maps to a null edition releaseDate", () => {
+    const episode: TmdbEpisode = {
+      id: 63056,
+      episode_number: 1,
+      season_number: 1,
+      name: "Winter Is Coming",
+      overview: "Eddard Stark...",
+      runtime: 62,
+      air_date: "",
+    };
+    const mapped = mapEpisode(1399, episode);
+    expect(mapped.edition?.releaseDate).toBeNull();
   });
 });
