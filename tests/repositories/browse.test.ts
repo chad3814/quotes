@@ -54,8 +54,8 @@ describe("listWorks", () => {
     expect(top.map((w) => w.title)).toEqual(["A New Hope", "The Office"]);
     const movie = top.find((w) => w.title === "A New Hope");
     expect(movie?.quoteCount).toBe(1);
-    // The series itself has no direct editions/quotes.
-    expect(top.find((w) => w.title === "The Office")?.quoteCount).toBe(0);
+    // The series has no direct quotes, but its quote count includes its episodes' (1).
+    expect(top.find((w) => w.title === "The Office")?.quoteCount).toBe(1);
   });
 
   it("filters by type", async () => {
@@ -155,5 +155,26 @@ describe("getLibraryStats", () => {
     expect(stats.works).toBe(3); // movie, series, episode
     expect(stats.quotes).toBe(2);
     expect(stats.characters).toBe(2);
+  });
+});
+
+describe("listWorks quoteCount includes child works", () => {
+  it("sums a series' quotes across all its episodes", async () => {
+    const db = await createTestDb();
+    const series = await createWork(db, { type: "TV_SERIES", title: "Show" });
+    const e1 = await createWork(db, { type: "TV_EPISODE", title: "E1", parentWorkId: series.id, seasonNumber: 1, episodeNumber: 1 });
+    const e2 = await createWork(db, { type: "TV_EPISODE", title: "E2", parentWorkId: series.id, seasonNumber: 1, episodeNumber: 2 });
+    const ed1 = await createEdition(db, { workId: e1.id, format: "TV_BROADCAST" });
+    const ed2 = await createEdition(db, { workId: e2.id, format: "TV_BROADCAST" });
+    await createQuote(db, { editionId: ed1.id, lines: [{ type: "DIALOG", content: "one" }] });
+    await createQuote(db, { editionId: ed2.id, lines: [{ type: "DIALOG", content: "two" }] });
+    await createQuote(db, { editionId: ed2.id, lines: [{ type: "DIALOG", content: "three" }] });
+
+    const [seriesRow] = await listWorks(db, { topLevelOnly: true, type: "TV_SERIES" });
+    expect(seriesRow.quoteCount).toBe(3); // 0 direct + 1 (E1) + 2 (E2)
+
+    // Episodes still report only their own quotes.
+    const episodes = await listWorks(db, { parentId: series.id });
+    expect(episodes.map((e) => e.quoteCount).sort()).toEqual([1, 2]);
   });
 });

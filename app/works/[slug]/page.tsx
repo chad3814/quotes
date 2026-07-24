@@ -36,13 +36,15 @@ export default async function WorkPage({ params }: { params: Params }) {
   const quotes = work.editions.flatMap((edition) =>
     edition.quotes.map((quote) => ({ ...quote, editionFormat: edition.format })),
   );
-  const totalQuotes = quotes.length;
+  const ownQuotes = quotes.length;
+  // Headline count includes child works' quotes (a series counts its episodes').
+  const inclusiveQuotes = ownQuotes + work.children.reduce((sum, child) => sum + child.quoteCount, 0);
   const multipleEditions = work.editions.length > 1;
 
   const subtitleParts = [workTypeLabel(work.type)];
   if (code) subtitleParts.push(code);
   if (work.year) subtitleParts.push(String(work.year));
-  subtitleParts.push(pluralize(totalQuotes, "quote"));
+  subtitleParts.push(pluralize(inclusiveQuotes, "quote"));
 
   // Group episodes by season (children arrive ordered by season, then episode).
   const seasonGroups: { season: number | null; episodes: typeof work.children }[] = [];
@@ -130,9 +132,9 @@ export default async function WorkPage({ params }: { params: Params }) {
         </section>
       )}
 
-      {totalQuotes > 0 ? (
+      {ownQuotes > 0 ? (
         <section>
-          <h2 className="section-label">Quotes ({totalQuotes})</h2>
+          <h2 className="section-label">Quotes ({ownQuotes})</h2>
           <QuoteList
             quotes={quotes.map((quote) => ({
               slug: quote.slug,

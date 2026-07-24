@@ -1,7 +1,7 @@
-import { and, asc, count, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { EditionFormat, WorkType } from "@/db/schema";
-import { editions, quotes, works } from "@/db/schema";
+import { works } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { quotePreview } from "@/lib/preview";
 import { ensureUniqueSlug } from "@/repositories/slug-util";
@@ -81,13 +81,18 @@ export async function listWorks(db: Database, options: ListWorksOptions = {}): P
       year: works.year,
       seasonNumber: works.seasonNumber,
       episodeNumber: works.episodeNumber,
-      quoteCount: count(quotes.id),
+      // Quotes attributed to this work AND its child works (e.g. a series counts
+      // every episode's quotes). Child works nest one level (series → episodes).
+      quoteCount: sql<number>`(
+        select count(*)::int
+        from quotes q
+        join editions e on e.id = q.edition_id
+        join works cw on cw.id = e.work_id
+        where cw.id = works.id or cw.parent_work_id = works.id
+      )`,
     })
     .from(works)
-    .leftJoin(editions, eq(editions.workId, works.id))
-    .leftJoin(quotes, eq(quotes.editionId, editions.id))
     .where(conditions.length ? and(...conditions) : undefined)
-    .groupBy(works.id)
     .orderBy(asc(works.seasonNumber), asc(works.episodeNumber), asc(works.title))
     .$dynamic();
 
