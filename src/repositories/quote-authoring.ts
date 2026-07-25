@@ -7,13 +7,23 @@ import { createWork } from "@/repositories/works";
 import { createEdition } from "@/repositories/editions";
 import { findOrCreateCharacter } from "@/repositories/characters";
 
+/**
+ * A speaker/subject reference. When `id` is present the exact existing character
+ * is used (picked from the combobox) — no name matching, so it can't create a
+ * duplicate. When only `name` is given (a newly-typed character) it's resolved
+ * case-insensitively, creating one if none matches. A bare string is shorthand
+ * for `{ name }`, kept so programmatic callers can attribute by name.
+ */
+export type CharacterRef = { id?: string; name: string };
+export type CharacterInput = string | CharacterRef;
+
 export type AuthorLineInput = {
   type: LineType;
   content: string;
-  /** Speaker character name; resolved/created on save. */
-  speaker?: string;
-  /** Subject character names. */
-  subjects?: string[];
+  /** Speaker: an existing character (id) or a new one (name). */
+  speaker?: CharacterInput;
+  /** Subjects: existing characters (id) and/or new ones (name). */
+  subjects?: CharacterInput[];
 };
 
 export type AuthorEditionInput =
@@ -73,22 +83,35 @@ async function resolveEditionId(db: Database, edition: AuthorEditionInput): Prom
   return created.id;
 }
 
+/**
+ * Resolves a character reference to an id. An `id` (an existing character picked
+ * from the list) is used as-is; otherwise the name is resolved/created. Returns
+ * null when there's nothing to attribute (a blank name and no id).
+ */
+async function resolveCharacterId(db: Database, input: CharacterInput): Promise<string | null> {
+  const ref: CharacterRef = typeof input === "string" ? { name: input } : input;
+  if (ref.id) return ref.id;
+  const name = (ref.name ?? "").trim();
+  if (!name) return null;
+  const character = await findOrCreateCharacter(db, name);
+  return character.id;
+}
+
 async function buildLines(db: Database, lines: AuthorLineInput[]): Promise<CreateLineInput[]> {
   const built: CreateLineInput[] = [];
   for (const line of lines) {
     const attributions: CreateAttributionInput[] = [];
-    const speaker = (line.speaker ?? "").trim();
-    if (speaker) {
-      const character = await findOrCreateCharacter(db, speaker);
-      attributions.push({ characterId: character.id, role: "SPEAKER" });
+    if (line.speaker != null) {
+      const speakerId = await resolveCharacterId(db, line.speaker);
+      if (speakerId) attributions.push({ characterId: speakerId, role: "SPEAKER" });
     }
-    // De-duplicate subjects so a repeated name doesn't create duplicate rows.
+    // De-duplicate subjects so the same character can't be attributed twice.
     const seenSubjects = new Set<string>();
-    for (const subjectName of (line.subjects ?? []).map((name) => name.trim()).filter(Boolean)) {
-      const character = await findOrCreateCharacter(db, subjectName);
-      if (seenSubjects.has(character.id)) continue;
-      seenSubjects.add(character.id);
-      attributions.push({ characterId: character.id, role: "SUBJECT" });
+    for (const subject of line.subjects ?? []) {
+      const subjectId = await resolveCharacterId(db, subject);
+      if (!subjectId || seenSubjects.has(subjectId)) continue;
+      seenSubjects.add(subjectId);
+      attributions.push({ characterId: subjectId, role: "SUBJECT" });
     }
     built.push({ type: line.type, content: line.content, attributions });
   }

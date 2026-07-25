@@ -19,8 +19,11 @@ export default async function NewQuotePage() {
     }`,
   }));
 
-  // Character names aren't unique, so de-duplicate for the autocomplete datalist.
-  const characterNames = [...new Set(characters.map((character) => character.name))];
+  const characterOptions = characters.map((character) => ({
+    id: character.id,
+    name: character.name,
+    quoteCount: character.quoteCount,
+  }));
 
   return (
     <>
@@ -28,7 +31,7 @@ export default async function NewQuotePage() {
         <h1 className="page-title">Add a quote</h1>
         <p className="page-subtitle">Compose the lines and attach the quote to an edition.</p>
       </div>
-      <QuoteForm editions={editionOptions} characterNames={characterNames} />
+      <QuoteForm editions={editionOptions} characters={characterOptions} />
     </>
   );
 }

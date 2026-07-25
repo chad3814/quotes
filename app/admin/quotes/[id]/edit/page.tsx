@@ -18,15 +18,19 @@ export default async function EditQuotePage({ params }: { params: Params }) {
   const [quote, characters] = await Promise.all([getQuoteById(db, id), listCharacters(db)]);
   if (!quote) notFound();
 
-  const initialLines: LineState[] = quote.lines.map((line) => ({
-    type: line.type,
-    content: line.content,
-    speaker: line.attributions.find((attr) => attr.role === "SPEAKER")?.characterName ?? "",
-    subjects: line.attributions
-      .filter((attr) => attr.role === "SUBJECT")
-      .map((attr) => attr.characterName)
-      .join(", "),
-  }));
+  const initialLines: LineState[] = quote.lines.map((line) => {
+    const speaker = line.attributions.find((attr) => attr.role === "SPEAKER");
+    return {
+      type: line.type,
+      content: line.content,
+      // Seed with the existing character's id so an unchanged speaker/subject
+      // stays bound to that character (no re-resolution, no accidental dup).
+      speaker: speaker ? { id: speaker.characterId, name: speaker.characterName } : null,
+      subjects: line.attributions
+        .filter((attr) => attr.role === "SUBJECT")
+        .map((attr) => ({ id: attr.characterId, name: attr.characterName })),
+    };
+  });
 
   const { position } = quote;
   const initialPosition: AuthorPositionInput = {
@@ -40,7 +44,11 @@ export default async function EditQuotePage({ params }: { params: Params }) {
 
   const { work, edition } = quote.source;
   const sourceLabel = `${work.title}${work.year ? ` (${work.year})` : ""} — ${editionFormatLabel(edition.format)}`;
-  const characterNames = [...new Set(characters.map((character) => character.name))];
+  const characterOptions = characters.map((character) => ({
+    id: character.id,
+    name: character.name,
+    quoteCount: character.quoteCount,
+  }));
 
   return (
     <>
@@ -53,7 +61,7 @@ export default async function EditQuotePage({ params }: { params: Params }) {
       <QuoteEditForm
         id={quote.id}
         sourceLabel={sourceLabel}
-        characterNames={characterNames}
+        characters={characterOptions}
         initialLines={initialLines}
         initialPosition={initialPosition}
       />

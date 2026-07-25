@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import type { EditionFormat, LineType, WorkType } from "@/db/schema";
 import { createQuoteAction } from "../../actions";
-import type { AuthorQuoteInput } from "@/repositories/quote-authoring";
+import type { AuthorQuoteInput, CharacterRef } from "@/repositories/quote-authoring";
+import { CharacterCombobox, SubjectsField, type CharacterOption } from "../CharacterCombobox";
 
 const LINE_TYPES: { value: LineType; label: string }[] = [
   { value: "DIALOG", label: "Dialog" },
@@ -32,16 +33,16 @@ const EDITION_FORMATS: { value: EditionFormat; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-type LineState = { type: LineType; content: string; speaker: string; subjects: string };
+type LineState = { type: LineType; content: string; speaker: CharacterRef | null; subjects: CharacterRef[] };
 
-const emptyLine: LineState = { type: "DIALOG", content: "", speaker: "", subjects: "" };
+const emptyLine: LineState = { type: "DIALOG", content: "", speaker: null, subjects: [] };
 
 type Props = {
   editions: { id: string; label: string }[];
-  characterNames: string[];
+  characters: CharacterOption[];
 };
 
-export function QuoteForm({ editions, characterNames }: Props) {
+export function QuoteForm({ editions, characters }: Props) {
   const [editionMode, setEditionMode] = useState<"existing" | "new">(editions.length > 0 ? "existing" : "new");
   const [editionId, setEditionId] = useState(editions[0]?.id ?? "");
   const [newWorkType, setNewWorkType] = useState<WorkType>("MOVIE");
@@ -83,8 +84,8 @@ export function QuoteForm({ editions, characterNames }: Props) {
       lines: lines.map((line) => ({
         type: line.type,
         content: line.content,
-        speaker: line.speaker,
-        subjects: line.subjects.split(",").map((name) => name.trim()).filter(Boolean),
+        speaker: line.speaker ?? undefined,
+        subjects: line.subjects,
       })),
       position,
     };
@@ -236,25 +237,25 @@ export function QuoteForm({ editions, characterNames }: Props) {
               placeholder="The line as spoken or written…"
             />
             <div className="admin-line__attrs">
-              <label className="admin-form__field admin-form__field--grow">
+              <div className="admin-form__field admin-form__field--grow">
                 <span className="admin-form__label">Speaker</span>
-                <input
-                  className="admin-form__control"
-                  list="character-names"
+                <CharacterCombobox
+                  options={characters}
                   value={line.speaker}
-                  onChange={(event) => updateLine(index, { speaker: event.target.value })}
+                  onChange={(ref) => updateLine(index, { speaker: ref })}
+                  label={`Line ${index + 1} speaker`}
                   placeholder="Character name"
                 />
-              </label>
-              <label className="admin-form__field admin-form__field--grow">
+              </div>
+              <div className="admin-form__field admin-form__field--grow">
                 <span className="admin-form__label">About (subjects)</span>
-                <input
-                  className="admin-form__control"
+                <SubjectsField
+                  options={characters}
                   value={line.subjects}
-                  onChange={(event) => updateLine(index, { subjects: event.target.value })}
-                  placeholder="Comma-separated names"
+                  onChange={(refs) => updateLine(index, { subjects: refs })}
+                  label={`Line ${index + 1} subject`}
                 />
-              </label>
+              </div>
             </div>
           </div>
         ))}
@@ -333,12 +334,6 @@ export function QuoteForm({ editions, characterNames }: Props) {
           {pending ? "Saving…" : "Save quote"}
         </button>
       </div>
-
-      <datalist id="character-names">
-        {characterNames.map((name) => (
-          <option key={name} value={name} />
-        ))}
-      </datalist>
     </form>
   );
 }

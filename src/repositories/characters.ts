@@ -1,4 +1,4 @@
-import { and, asc, countDistinct, eq } from "drizzle-orm";
+import { and, asc, countDistinct, eq, sql } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { AttributionRole } from "@/db/schema";
 import { attributions, characters, lines, quotes } from "@/db/schema";
@@ -25,16 +25,20 @@ export async function createCharacter(
 }
 
 /**
- * Returns the id/slug of the character with this exact name, creating one if
- * none exists. Used by the admin quote authoring flow where speakers/subjects
- * are entered by name.
+ * Returns the id/slug of the character whose name matches (case-insensitively,
+ * ignoring surrounding whitespace), creating one if none exists. Matching is
+ * case-insensitive so a typed "obi-wan" doesn't duplicate an existing "Obi-Wan".
+ * When several characters share a name, the oldest is reused deterministically.
+ * Used by the admin quote authoring flow where a new speaker/subject is entered
+ * by name rather than picked from the existing list.
  */
 export async function findOrCreateCharacter(db: Database, name: string): Promise<{ id: string; slug: string }> {
   const trimmed = name.trim();
   const existing = await db
     .select({ id: characters.id, slug: characters.slug })
     .from(characters)
-    .where(eq(characters.name, trimmed))
+    .where(sql`lower(${characters.name}) = ${trimmed.toLowerCase()}`)
+    .orderBy(asc(characters.createdAt), asc(characters.id))
     .limit(1);
   if (existing.length > 0) return existing[0];
   return createCharacter(db, { name: trimmed });

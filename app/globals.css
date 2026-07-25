@@ -1188,6 +1188,108 @@ textarea.admin-form__control {
   gap: var(--space-4);
 }
 
+.admin-combobox {
+  position: relative;
+}
+
+.admin-combobox__input--bound {
+  padding-right: var(--space-6);
+}
+
+.admin-combobox__badge {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.admin-combobox__list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.18));
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.admin-combobox__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.admin-combobox__item--active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.admin-combobox__hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  flex: 0 0 auto;
+}
+
+.admin-combobox__create {
+  color: var(--accent);
+}
+
+.admin-subjects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-subjects__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-subjects__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: var(--hairline);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.admin-subjects__remove {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--text-md);
+  line-height: 1;
+  padding: 0;
+}
+
+.admin-subjects__remove:hover {
+  color: var(--accent);
+}
+
 .admin-form__error {
   color: var(--accent);
   font-size: var(--text-sm);

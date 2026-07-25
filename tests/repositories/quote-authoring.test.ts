@@ -32,6 +32,55 @@ describe("authorQuote", () => {
     expect(await db.select().from(characters)).toHaveLength(2);
   });
 
+  it("reuses an existing character when a new speaker name differs only in case", async () => {
+    const db = await createTestDb();
+    const work = await createWork(db, { type: "MOVIE", title: "Star Wars" });
+    const edition = await createEdition(db, { workId: work.id, format: "THEATRICAL" });
+    await createCharacter(db, { name: "Obi-Wan Kenobi" });
+
+    await authorQuote(db, {
+      edition: { mode: "existing", id: edition.id },
+      // Typed by hand with different casing/whitespace — must not create a duplicate.
+      lines: [{ type: "DIALOG", content: "Hello there.", speaker: "  obi-wan kenobi " }],
+    });
+
+    expect(await db.select().from(characters)).toHaveLength(1);
+  });
+
+  it("binds a picked character by id without matching on name", async () => {
+    const db = await createTestDb();
+    const work = await createWork(db, { type: "MOVIE", title: "Star Wars" });
+    const edition = await createEdition(db, { workId: work.id, format: "THEATRICAL" });
+    const obiwan = await createCharacter(db, { name: "Obi-Wan Kenobi" });
+
+    const { slug } = await authorQuote(db, {
+      edition: { mode: "existing", id: edition.id },
+      // A stale/edited name string is ignored when an id is present — the id wins.
+      lines: [{ type: "DIALOG", content: "Hello there.", speaker: { id: obiwan.id, name: "typo name" } }],
+    });
+
+    expect(await db.select().from(characters)).toHaveLength(1);
+    const detail = await getQuoteBySlug(db, slug);
+    expect(detail?.lines[0].attributions.find((a) => a.role === "SPEAKER")?.characterName).toBe("Obi-Wan Kenobi");
+  });
+
+  it("de-duplicates a subject picked by id and typed again by name", async () => {
+    const db = await createTestDb();
+    const work = await createWork(db, { type: "MOVIE", title: "Star Wars" });
+    const edition = await createEdition(db, { workId: work.id, format: "THEATRICAL" });
+    const grievous = await createCharacter(db, { name: "Grievous" });
+
+    const { slug } = await authorQuote(db, {
+      edition: { mode: "existing", id: edition.id },
+      lines: [{ type: "DIALOG", content: "General Kenobi.", subjects: [{ id: grievous.id, name: "Grievous" }, "grievous"] }],
+    });
+
+    const detail = await getQuoteBySlug(db, slug);
+    const subjects = detail?.lines[0].attributions.filter((attr) => attr.role === "SUBJECT") ?? [];
+    expect(subjects).toHaveLength(1);
+    expect(await db.select().from(characters)).toHaveLength(1);
+  });
+
   it("creates the work and edition for a 'new work' submission", async () => {
     const db = await createTestDb();
     const { slug } = await authorQuote(db, {
