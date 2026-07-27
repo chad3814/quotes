@@ -5,6 +5,7 @@ import type { EditionFormat, LineType, WorkType } from "@/db/schema";
 import { createQuoteAction } from "../../actions";
 import type { AuthorQuoteInput, CharacterRef } from "@/repositories/quote-authoring";
 import { CharacterCombobox, SubjectsField, type CharacterOption } from "../CharacterCombobox";
+import { EditionCombobox } from "../EditionCombobox";
 
 const LINE_TYPES: { value: LineType; label: string }[] = [
   { value: "DIALOG", label: "Dialog" },
@@ -44,7 +45,7 @@ type Props = {
 
 export function QuoteForm({ editions, characters }: Props) {
   const [editionMode, setEditionMode] = useState<"existing" | "new">(editions.length > 0 ? "existing" : "new");
-  const [editionId, setEditionId] = useState(editions[0]?.id ?? "");
+  const [editionId, setEditionId] = useState("");
   const [newWorkType, setNewWorkType] = useState<WorkType>("MOVIE");
   const [newTitle, setNewTitle] = useState("");
   const [newYear, setNewYear] = useState("");
@@ -132,20 +133,16 @@ export function QuoteForm({ editions, characters }: Props) {
         )}
 
         {editionMode === "existing" ? (
-          <label className="admin-form__field">
+          <div className="admin-form__field">
             <span className="admin-form__label">Edition</span>
-            <select
-              className="admin-form__control"
+            <EditionCombobox
+              options={editions}
               value={editionId}
-              onChange={(event) => setEditionId(event.target.value)}
-            >
-              {editions.map((edition) => (
-                <option key={edition.id} value={edition.id}>
-                  {edition.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={setEditionId}
+              label="Edition"
+              placeholder="Search by title, year, or format…"
+            />
+          </div>
         ) : (
           <div className="admin-form__row">
             <label className="admin-form__field">
