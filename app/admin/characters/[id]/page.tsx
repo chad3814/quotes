@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db/client";
-import { getCharacterEditById } from "@/repositories/characters";
+import { getCharacterEditById, listCharacters } from "@/repositories/characters";
 import { CharacterEditForm } from "./CharacterEditForm";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,12 @@ export default async function EditCharacterPage({ params }: { params: Params }) 
   const character = await getCharacterEditById(db, id);
   if (!character) notFound();
 
+  // Candidates to merge into: every other character (high limit so none are hidden).
+  const all = await listCharacters(db, { limit: 10_000 });
+  const mergeOptions = all
+    .filter((c) => c.id !== id)
+    .map((c) => ({ id: c.id, name: c.name, quoteCount: c.quoteCount }));
+
   return (
     <>
       <div className="page-header">
@@ -26,6 +32,7 @@ export default async function EditCharacterPage({ params }: { params: Params }) 
         slug={character.slug}
         quoteCount={character.quoteCount}
         initial={{ name: character.name, description: character.description ?? "" }}
+        mergeOptions={mergeOptions}
       />
     </>
   );

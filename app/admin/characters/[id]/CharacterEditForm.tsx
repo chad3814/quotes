@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deleteCharacterAction, updateCharacterAction } from "../actions";
+import { deleteCharacterAction, mergeCharacterAction, updateCharacterAction } from "../actions";
 import type { UpdateCharacterPayload } from "../types";
+import { CharacterCombobox, type CharacterOption } from "../../quotes/CharacterCombobox";
+import type { CharacterRef } from "@/repositories/quote-authoring";
 import { pluralize } from "@/lib/format";
 
 type Props = {
@@ -10,15 +12,19 @@ type Props = {
   slug: string;
   quoteCount: number;
   initial: UpdateCharacterPayload;
+  /** Every other character, as targets to merge this one into. */
+  mergeOptions: CharacterOption[];
 };
 
-export function CharacterEditForm({ id, slug, quoteCount, initial }: Props) {
+export function CharacterEditForm({ id, slug, quoteCount, initial, mergeOptions }: Props) {
   const [fields, setFields] = useState<UpdateCharacterPayload>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState<CharacterRef | null>(null);
   const [saving, startSaving] = useTransition();
   const [deleting, startDeleting] = useTransition();
+  const [merging, startMerging] = useTransition();
 
   function update(patch: Partial<UpdateCharacterPayload>) {
     setFields((current) => ({ ...current, ...patch }));
@@ -40,6 +46,17 @@ export function CharacterEditForm({ id, slug, quoteCount, initial }: Props) {
     startDeleting(async () => {
       // On success the action redirects to /admin/characters; only an error returns.
       const result = await deleteCharacterAction(id);
+      if (result?.error) setError(result.error);
+    });
+  }
+
+  function merge() {
+    if (!mergeTarget?.id) return;
+    const targetId = mergeTarget.id;
+    setError(null);
+    startMerging(async () => {
+      // On success the action redirects to the target's page; only an error returns.
+      const result = await mergeCharacterAction(id, targetId);
       if (result?.error) setError(result.error);
     });
   }
@@ -94,6 +111,32 @@ export function CharacterEditForm({ id, slug, quoteCount, initial }: Props) {
           {saving ? "Saving…" : "Save changes"}
         </button>
       </div>
+
+      <fieldset className="admin-form__group">
+        <legend className="section-label">Merge</legend>
+        <p className="admin-form__hint">
+          Fold this character into another. This character’s quote attributions move to the chosen
+          character{quoteCount > 0 ? ` (${pluralize(quoteCount, "quote")})` : ""}, and this one is deleted.
+        </p>
+        <div className="admin-form__field">
+          <span className="admin-form__label">Merge into</span>
+          <CharacterCombobox
+            options={mergeOptions}
+            value={mergeTarget}
+            onChange={setMergeTarget}
+            allowCreate={false}
+            label="Character to merge into"
+            placeholder="Search characters…"
+          />
+        </div>
+        {mergeTarget?.id && (
+          <div className="admin-form__actions">
+            <button type="button" className="btn-danger" onClick={merge} disabled={merging}>
+              {merging ? "Merging…" : `Merge into ${mergeTarget.name} & delete this`}
+            </button>
+          </div>
+        )}
+      </fieldset>
 
       <fieldset className="admin-form__group admin-form__danger">
         <legend className="section-label">Danger zone</legend>

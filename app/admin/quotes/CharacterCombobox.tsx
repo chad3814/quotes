@@ -21,6 +21,8 @@ type Props = {
   commitOnBlur?: boolean;
   /** Clear the input after a commit (used by the adder). */
   clearOnCommit?: boolean;
+  /** Allow typing a brand-new name (default true). Pass false for a pure existing-character picker. */
+  allowCreate?: boolean;
   label: string;
   placeholder?: string;
 };
@@ -40,6 +42,7 @@ export function CharacterCombobox({
   onCommit,
   commitOnBlur = true,
   clearOnCommit = false,
+  allowCreate = true,
   label,
   placeholder,
 }: Props) {
@@ -64,9 +67,9 @@ export function CharacterCombobox({
       .map((option): ComboItem => ({ kind: "option", option }));
 
     const exact = q !== "" && options.some((o) => o.name.toLowerCase() === q);
-    if (q !== "" && !exact) matches.push({ kind: "create", name: query.trim() });
+    if (allowCreate && q !== "" && !exact) matches.push({ kind: "create", name: query.trim() });
     return matches;
-  }, [options, q, query]);
+  }, [options, q, query, allowCreate]);
 
   function apply(ref: CharacterRef | null) {
     setQuery(clearOnCommit ? "" : ref?.name ?? "");
@@ -85,20 +88,28 @@ export function CharacterCombobox({
     setQuery(text);
     setOpen(true);
     setActive(0);
-    // Typing breaks any id binding — it's a new/edited name until re-selected.
-    onChange?.(text.trim() ? { name: text.trim() } : null);
+    // In create mode, typing breaks any id binding — it's a new/edited name until
+    // re-selected. In existing-only mode, typing is just filtering; the selection
+    // only changes when an option is actually picked (or reverted on blur).
+    if (allowCreate) onChange?.(text.trim() ? { name: text.trim() } : null);
   }
 
   function handleBlur() {
     setOpen(false);
     if (!commitOnBlur) return;
     const name = query.trim();
-    if (!name) {
-      apply(null);
+    const match = name ? options.find((o) => o.name.toLowerCase() === name.toLowerCase()) : undefined;
+    if (match) {
+      apply({ id: match.id, name: match.name });
       return;
     }
-    const match = options.find((o) => o.name.toLowerCase() === name.toLowerCase());
-    apply(match ? { id: match.id, name: match.name } : { name });
+    if (!allowCreate) {
+      // Existing-only: an unmatched query can't become a selection — revert the
+      // text to the current selection (or empty) without changing the value.
+      setQuery(value?.name ?? "");
+      return;
+    }
+    apply(name ? { name } : null);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {

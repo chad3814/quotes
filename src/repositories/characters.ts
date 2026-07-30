@@ -1,4 +1,4 @@
-import { and, asc, countDistinct, eq, sql } from "drizzle-orm";
+import { and, asc, countDistinct, eq, inArray, sql } from "drizzle-orm";
 import type { Database } from "@/db/types";
 import type { AttributionRole } from "@/db/schema";
 import { attributions, characters, lines, quotes } from "@/db/schema";
@@ -126,6 +126,53 @@ export async function updateCharacter(db: Database, id: string, fields: UpdateCh
  */
 export async function deleteCharacter(db: Database, id: string): Promise<void> {
   await db.delete(characters).where(eq(characters.id, id));
+}
+
+/**
+ * Merges the source character into the target: the source's attributions are
+ * repointed to the target, then the source is deleted. A source attribution that
+ * would collide with one the target already has on the same line + role is
+ * dropped instead of repointed — that avoids a duplicate subject on a line and
+ * satisfies the one-speaker-per-line unique index. Runs in a transaction and
+ * returns the target's id/slug. Throws on a self-merge or a missing character.
+ */
+export async function mergeCharacters(
+  db: Database,
+  { sourceId, targetId }: { sourceId: string; targetId: string },
+): Promise<{ id: string; slug: string }> {
+  if (sourceId === targetId) throw new Error("Can't merge a character into itself.");
+
+  return db.transaction(async (tx) => {
+    const found = await tx
+      .select({ id: characters.id, slug: characters.slug })
+      .from(characters)
+      .where(inArray(characters.id, [sourceId, targetId]));
+    const source = found.find((c) => c.id === sourceId);
+    const target = found.find((c) => c.id === targetId);
+    if (!source || !target) throw new Error("Character not found.");
+
+    // Attributions the target already holds, keyed by line + role.
+    const targetAttrs = await tx
+      .select({ lineId: attributions.lineId, role: attributions.role })
+      .from(attributions)
+      .where(eq(attributions.characterId, targetId));
+    const targetKeys = new Set(targetAttrs.map((a) => `${a.lineId}:${a.role}`));
+
+    // Drop the source's attributions that would collide; repoint the rest.
+    const sourceAttrs = await tx
+      .select({ id: attributions.id, lineId: attributions.lineId, role: attributions.role })
+      .from(attributions)
+      .where(eq(attributions.characterId, sourceId));
+    const collidingIds = sourceAttrs.filter((a) => targetKeys.has(`${a.lineId}:${a.role}`)).map((a) => a.id);
+    if (collidingIds.length > 0) {
+      await tx.delete(attributions).where(inArray(attributions.id, collidingIds));
+    }
+    await tx.update(attributions).set({ characterId: targetId }).where(eq(attributions.characterId, sourceId));
+
+    await tx.delete(characters).where(eq(characters.id, sourceId));
+
+    return { id: target.id, slug: target.slug };
+  });
 }
 
 export type CharacterPage = {

@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/admin";
-import { getCharacterEditById, updateCharacter, deleteCharacter } from "@/repositories/characters";
+import {
+  getCharacterEditById,
+  updateCharacter,
+  deleteCharacter,
+  mergeCharacters,
+} from "@/repositories/characters";
 import type { UpdateCharacterPayload } from "./types";
 
 async function isRequestAdmin(): Promise<boolean> {
@@ -33,6 +38,27 @@ export async function updateCharacterAction(
   revalidatePath(`/characters/${character.slug}`);
   revalidatePath("/characters");
   return { ok: true };
+}
+
+export async function mergeCharacterAction(sourceId: string, targetId: string): Promise<{ error: string }> {
+  if (!(await isRequestAdmin())) return { error: "You are not authorized to merge characters." };
+  if (!targetId) return { error: "Choose a character to merge into." };
+  if (targetId === sourceId) return { error: "Choose a different character to merge into." };
+
+  const db = getDb();
+  const source = await getCharacterEditById(db, sourceId);
+  if (!source) return { error: "Character not found." };
+
+  try {
+    await mergeCharacters(db, { sourceId, targetId });
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Could not merge the characters." };
+  }
+
+  revalidatePath("/admin/characters");
+  revalidatePath("/characters");
+  revalidatePath(`/characters/${source.slug}`);
+  redirect(`/admin/characters/${targetId}`);
 }
 
 export async function deleteCharacterAction(id: string): Promise<{ error: string }> {

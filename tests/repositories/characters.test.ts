@@ -7,6 +7,7 @@ import {
   deleteCharacter,
   getCharacterEditById,
   getCharacterPageBySlug,
+  mergeCharacters,
   updateCharacter,
 } from "@/repositories/characters";
 import { createQuote, getQuoteBySlug } from "@/repositories/quotes";
@@ -114,5 +115,69 @@ describe("deleteCharacter", () => {
     const quote = await getQuoteBySlug(db, slug);
     expect(quote?.lines[0].content).toBe("Hello there."); // quote survives
     expect(quote?.lines[0].attributions).toHaveLength(0); // attribution cascaded away
+  });
+});
+
+describe("mergeCharacters", () => {
+  it("moves the source's attributions to the target and deletes the source", async () => {
+    const db = await createTestDb();
+    const work = await createWork(db, { type: "MOVIE", title: "A New Hope" });
+    const edition = await createEdition(db, { workId: work.id, format: "THEATRICAL" });
+    const leia = await createCharacter(db, { name: "Princess Leia Organa" });
+    const dup = await createCharacter(db, { name: "Princess Leia" });
+    const { slug } = await createQuote(db, {
+      editionId: edition.id,
+      lines: [{ type: "DIALOG", content: "Help me.", attributions: [{ characterId: dup.id, role: "SPEAKER" }] }],
+    });
+
+    const result = await mergeCharacters(db, { sourceId: dup.id, targetId: leia.id });
+    expect(result.id).toBe(leia.id);
+
+    expect(await getCharacterEditById(db, dup.id)).toBeNull(); // source gone
+    const quote = await getQuoteBySlug(db, slug);
+    const speaker = quote?.lines[0].attributions.find((a) => a.role === "SPEAKER");
+    expect(speaker?.characterName).toBe("Princess Leia Organa"); // repointed to target
+    expect((await getCharacterEditById(db, leia.id))?.quoteCount).toBe(1); // target now owns the quote
+  });
+
+  it("drops a colliding subject instead of duplicating it on the line", async () => {
+    const db = await createTestDb();
+    const work = await createWork(db, { type: "MOVIE", title: "A New Hope" });
+    const edition = await createEdition(db, { workId: work.id, format: "THEATRICAL" });
+    const target = await createCharacter(db, { name: "The Twins" });
+    const dup = await createCharacter(db, { name: "Twins" });
+    // Both the dup and the target are SUBJECT on the same line.
+    const { slug } = await createQuote(db, {
+      editionId: edition.id,
+      lines: [
+        {
+          type: "DIALOG",
+          content: "There they are.",
+          attributions: [
+            { characterId: target.id, role: "SUBJECT" },
+            { characterId: dup.id, role: "SUBJECT" },
+          ],
+        },
+      ],
+    });
+
+    await mergeCharacters(db, { sourceId: dup.id, targetId: target.id });
+
+    const quote = await getQuoteBySlug(db, slug);
+    const subjects = quote?.lines[0].attributions.filter((a) => a.role === "SUBJECT") ?? [];
+    expect(subjects).toHaveLength(1); // not duplicated
+    expect(subjects[0].characterName).toBe("The Twins");
+  });
+
+  it("throws when merging a character into itself", async () => {
+    const db = await createTestDb();
+    const c = await createCharacter(db, { name: "Solo" });
+    await expect(mergeCharacters(db, { sourceId: c.id, targetId: c.id })).rejects.toThrow(/itself/);
+  });
+
+  it("throws when a character is missing", async () => {
+    const db = await createTestDb();
+    const c = await createCharacter(db, { name: "Solo" });
+    await expect(mergeCharacters(db, { sourceId: c.id, targetId: "nope" })).rejects.toThrow(/not found/);
   });
 });
