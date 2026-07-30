@@ -75,6 +75,59 @@ export async function listCharacters(
     .offset(options.offset ?? 0);
 }
 
+export type CharacterEditData = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  quoteCount: number;
+};
+
+/** Loads a character's editable fields plus its distinct quote count (for the admin editor), or null. */
+export async function getCharacterEditById(db: Database, id: string): Promise<CharacterEditData | null> {
+  const character = await db.query.characters.findFirst({ where: eq(characters.id, id) });
+  if (!character) return null;
+
+  const [{ count }] = await db
+    .select({ count: countDistinct(quotes.id) })
+    .from(attributions)
+    .innerJoin(lines, eq(lines.id, attributions.lineId))
+    .innerJoin(quotes, eq(quotes.id, lines.quoteId))
+    .where(eq(attributions.characterId, id));
+
+  return {
+    id: character.id,
+    name: character.name,
+    slug: character.slug,
+    description: character.description,
+    quoteCount: count,
+  };
+}
+
+export type UpdateCharacterFields = {
+  name: string;
+  description?: string | null;
+};
+
+/**
+ * Patches a character's editable fields. The slug is intentionally left
+ * untouched — a name edit must not break the character's existing URL or links.
+ */
+export async function updateCharacter(db: Database, id: string, fields: UpdateCharacterFields): Promise<void> {
+  await db
+    .update(characters)
+    .set({ name: fields.name, description: fields.description ?? null, updatedAt: new Date() })
+    .where(eq(characters.id, id));
+}
+
+/**
+ * Deletes a character. Its attributions cascade away (see the schema's
+ * onDelete), so any quotes it appeared in survive but lose that speaker/subject.
+ */
+export async function deleteCharacter(db: Database, id: string): Promise<void> {
+  await db.delete(characters).where(eq(characters.id, id));
+}
+
 export type CharacterPage = {
   character: { id: string; name: string; slug: string; description: string | null };
   asSpeaker: QuoteSummary[];
